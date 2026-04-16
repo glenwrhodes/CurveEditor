@@ -458,7 +458,10 @@ export class InteractionHandler {
       });
     }
 
-    state.previewKeyOverrides.clear();
+    // Keep preview overrides in place until the doc:update round-trip returns
+    // with the new document. Otherwise the renderer briefly shows the original
+    // (pre-drag) values between the clear and the updated doc arriving.
+    // EditorState.updateDoc() clears the overrides when the fresh doc lands.
     this.postEdit(ops);
   }
 

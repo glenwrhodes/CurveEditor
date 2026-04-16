@@ -163,7 +163,11 @@ export class KeyInspector {
     } else if (isVec) {
       const values = key.value as number[];
       const compNames = isColor ? ['R', 'G', 'B', 'A'] : ['X', 'Y', 'Z', 'W'].slice(0, values.length);
-      for (let ci = 0; ci < values.length; ci++) {
+
+      if (state.activeComponent !== null && state.activeComponent < values.length) {
+        // Show only the active component's value field. This matches the "Editing:" scope
+        // so what you edit is clearly tied to the component you clicked.
+        const ci = state.activeComponent;
         this.addInputField(grid, compNames[ci], values[ci].toFixed(4), (val) => {
           const numVal = parseFloat(val);
           if (!isNaN(numVal)) {
@@ -172,6 +176,18 @@ export class KeyInspector {
             this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/value`, value: newValues }]);
           }
         });
+      } else {
+        // No active component — show all components so bulk editing is still easy
+        for (let ci = 0; ci < values.length; ci++) {
+          this.addInputField(grid, compNames[ci], values[ci].toFixed(4), (val) => {
+            const numVal = parseFloat(val);
+            if (!isNaN(numVal)) {
+              const newValues = [...values];
+              newValues[ci] = numVal;
+              this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/value`, value: newValues }]);
+            }
+          });
+        }
       }
     } else {
       this.addInputField(grid, 'Value', (key.value as number).toFixed(4), (val) => {
@@ -268,13 +284,17 @@ export class KeyInspector {
 
     this.contentEl.appendChild(grid);
 
-    // Tangent handles (for bezier)
-    if (key.interp === 'bezier') {
+    // Tangent handles are only shown when the effective interp for the scope is bezier.
+    // For vec/color with an active component, we show that component's tangent values.
+    // When activeComp is null on a vec/color, we show component 0 as a representative view.
+    if (effInterp === 'bezier') {
+      const tangentScopeComp = activeComp;
+
+      const tanIn = this.getTangent(key, 'in', tangentScopeComp ?? 0);
+      const tanOut = this.getTangent(key, 'out', tangentScopeComp ?? 0);
+
       const tanSection = document.createElement('div');
       tanSection.className = 'inspector-tangent-section';
-
-      const tanIn = this.getTangent(key, 'in');
-      const tanOut = this.getTangent(key, 'out');
 
       const inLabel = document.createElement('span');
       inLabel.className = 'inspector-section-label';
@@ -286,13 +306,13 @@ export class KeyInspector {
       this.addInputField(inRow, 'dx', tanIn.dx.toFixed(4), (val) => {
         const numVal = parseFloat(val);
         if (!isNaN(numVal)) {
-          this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentIn`, value: { dx: numVal, dy: tanIn.dy } }]);
+          this.writeTangent(sk, 'in', { dx: numVal, dy: tanIn.dy }, tangentScopeComp, componentCount);
         }
       });
       this.addInputField(inRow, 'dy', tanIn.dy.toFixed(4), (val) => {
         const numVal = parseFloat(val);
         if (!isNaN(numVal)) {
-          this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentIn`, value: { dx: tanIn.dx, dy: numVal } }]);
+          this.writeTangent(sk, 'in', { dx: tanIn.dx, dy: numVal }, tangentScopeComp, componentCount);
         }
       });
       tanSection.appendChild(inRow);
@@ -307,13 +327,13 @@ export class KeyInspector {
       this.addInputField(outRow, 'dx', tanOut.dx.toFixed(4), (val) => {
         const numVal = parseFloat(val);
         if (!isNaN(numVal)) {
-          this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentOut`, value: { dx: numVal, dy: tanOut.dy } }]);
+          this.writeTangent(sk, 'out', { dx: numVal, dy: tanOut.dy }, tangentScopeComp, componentCount);
         }
       });
       this.addInputField(outRow, 'dy', tanOut.dy.toFixed(4), (val) => {
         const numVal = parseFloat(val);
         if (!isNaN(numVal)) {
-          this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentOut`, value: { dx: tanOut.dx, dy: numVal } }]);
+          this.writeTangent(sk, 'out', { dx: tanOut.dx, dy: numVal }, tangentScopeComp, componentCount);
         }
       });
       tanSection.appendChild(outRow);
@@ -472,11 +492,52 @@ export class KeyInspector {
     return select;
   }
 
-  private getTangent(key: KeyFrame, which: 'in' | 'out'): TangentHandle {
+  private getTangent(key: KeyFrame, which: 'in' | 'out', component?: number): TangentHandle {
     const tangent = which === 'in' ? key.tangentIn : key.tangentOut;
-    if (!tangent) return { dx: which === 'in' ? -0.1 : 0.1, dy: 0 };
-    if (Array.isArray(tangent)) return tangent[0] || { dx: which === 'in' ? -0.1 : 0.1, dy: 0 };
+    const fallback = { dx: which === 'in' ? -0.1 : 0.1, dy: 0 };
+    if (!tangent) return fallback;
+    if (Array.isArray(tangent)) {
+      const idx = component ?? 0;
+      return tangent[idx] || fallback;
+    }
     return tangent;
+  }
+
+  /** Write a single tangent value back to the key, preserving per-component
+   *  arrays for vec/color curves. */
+  private writeTangent(
+    sk: { curveIndex: number; keyIndex: number },
+    which: 'in' | 'out',
+    newHandle: TangentHandle,
+    component: number | null,
+    componentCount: number
+  ): void {
+    const curve = this.state.doc.curves[sk.curveIndex];
+    const key = curve.keys[sk.keyIndex];
+    const newKey: KeyFrame = JSON.parse(JSON.stringify(key));
+    const field = which === 'in' ? 'tangentIn' : 'tangentOut';
+
+    if (component !== null && componentCount > 1) {
+      // Per-component: materialize array if needed, update just the slot
+      const existing = newKey[field];
+      const arr: TangentHandle[] = Array.isArray(existing)
+        ? [...existing]
+        : new Array(componentCount).fill(0).map(() =>
+            existing ? { ...(existing as TangentHandle) } : { dx: which === 'in' ? -0.1 : 0.1, dy: 0 }
+          );
+      while (arr.length < componentCount) {
+        arr.push({ dx: which === 'in' ? -0.1 : 0.1, dy: 0 });
+      }
+      arr[component] = newHandle;
+      newKey[field] = arr;
+    } else {
+      newKey[field] = newHandle;
+    }
+
+    // Auto tangent mode no longer applies once the user edits by hand
+    if (newKey.tangentMode === 'auto') newKey.tangentMode = 'user';
+
+    this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}`, value: newKey }]);
   }
 }
 

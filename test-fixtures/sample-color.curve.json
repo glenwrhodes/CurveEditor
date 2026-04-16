@@ -7,11 +7,61 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": [1.0, 0.0, 0.0, 1.0], "interp": "linear", "tangentMode": "auto" },
-        { "time": 0.5, "value": [1.0, 1.0, 0.0, 1.0], "interp": "linear", "tangentMode": "auto" },
-        { "time": 1.0, "value": [0.0, 1.0, 0.0, 1.0], "interp": "linear", "tangentMode": "auto" },
-        { "time": 1.5, "value": [0.0, 0.0, 1.0, 1.0], "interp": "linear", "tangentMode": "auto" },
-        { "time": 2.0, "value": [1.0, 0.0, 1.0, 1.0], "interp": "linear", "tangentMode": "auto" }
+        {
+          "time": 0,
+          "value": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 0.5,
+          "value": [
+            1,
+            1,
+            0,
+            1
+          ],
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1,
+          "value": [
+            0,
+            1,
+            0,
+            1
+          ],
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1.5,
+          "value": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 2,
+          "value": [
+            1,
+            0,
+            1,
+            1
+          ],
+          "interp": "linear",
+          "tangentMode": "auto"
+        }
       ]
     },
     {
@@ -20,9 +70,120 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": [0.0, 0.0, 0.0], "interp": "bezier", "tangentMode": "auto" },
-        { "time": 1.0, "value": [5.0, 2.0, 0.0], "interp": "bezier", "tangentMode": "auto" },
-        { "time": 2.0, "value": [10.0, 0.0, 3.0], "interp": "bezier", "tangentMode": "auto" }
+        {
+          "time": 0,
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentIn": [
+            {
+              "dx": -0.3333333333333333,
+              "dy": -1.6666666666666665
+            },
+            {
+              "dx": -0.3333333333333333,
+              "dy": -0.6666666666666666
+            },
+            {
+              "dx": -0.3333333333333333,
+              "dy": 0
+            }
+          ],
+          "tangentOut": [
+            {
+              "dx": 0.3333333333333333,
+              "dy": 1.6666666666666665
+            },
+            {
+              "dx": 0.3333333333333333,
+              "dy": 0.6666666666666666
+            },
+            {
+              "dx": 0.44499999999999995,
+              "dy": 0.36666687011718746
+            }
+          ]
+        },
+        {
+          "time": 1,
+          "value": [
+            5,
+            2,
+            0
+          ],
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentIn": [
+            {
+              "dx": -0.3333333333333333,
+              "dy": -1.6666666666666665
+            },
+            {
+              "dx": -0.3333333333333333,
+              "dy": 0
+            },
+            {
+              "dx": -0.4099999999999999,
+              "dy": 0.10166687011718745
+            }
+          ],
+          "tangentOut": [
+            {
+              "dx": 0.3333333333333333,
+              "dy": 1.6666666666666665
+            },
+            {
+              "dx": 0.3333333333333333,
+              "dy": 0
+            },
+            {
+              "dx": 0.6749999999999998,
+              "dy": 0.001666870117187469
+            }
+          ]
+        },
+        {
+          "time": 2,
+          "value": [
+            10,
+            0,
+            3
+          ],
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentIn": [
+            {
+              "dx": -0.3333333333333333,
+              "dy": -1.6666666666666665
+            },
+            {
+              "dx": -0.3333333333333333,
+              "dy": 0.6666666666666666
+            },
+            {
+              "dx": -0.3700000000000001,
+              "dy": -0.7883331298828127
+            }
+          ],
+          "tangentOut": [
+            {
+              "dx": 0.3333333333333333,
+              "dy": 1.6666666666666665
+            },
+            {
+              "dx": 0.3333333333333333,
+              "dy": -0.6666666666666666
+            },
+            {
+              "dx": 0.3333333333333333,
+              "dy": 1
+            }
+          ]
+        }
       ]
     }
   ]
