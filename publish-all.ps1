@@ -132,13 +132,10 @@ function Set-JsonVersion([string]$path, [string]$newVersion) {
 
 function Set-PyVersion([string]$path, [string]$newVersion) {
     $content = Get-Content $path -Raw
-    $new = [regex]::Replace(
-        $content,
-        'version\s*=\s*"[^"]+"',
-        "version = `"$newVersion`"",
-        [System.Text.RegularExpressions.RegexOptions]::IgnoreCase,
-        1  # first match only (the [project] table)
-    )
+    # Replace the single `version = "X.Y.Z"` line in the [project] table.
+    # This is safe because pyproject.toml only has one such line; classifier
+    # strings like "Python :: 3.12" don't include `version =`.
+    $new = $content -replace 'version\s*=\s*"[^"]+"', "version = `"$newVersion`""
     Set-Content -Path $path -Value $new -NoNewline
 }
 
