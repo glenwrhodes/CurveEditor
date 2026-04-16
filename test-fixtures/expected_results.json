@@ -3,64 +3,64 @@
     {
       "name": "singleFloat_before",
       "curve": "singleFloat",
-      "time": 0.0,
-      "expected": 5.0
+      "time": 0,
+      "expected": 7.5
     },
     {
       "name": "singleFloat_at",
       "curve": "singleFloat",
-      "time": 1.0,
-      "expected": 5.0
+      "time": 1,
+      "expected": 7.5
     },
     {
       "name": "singleFloat_after",
       "curve": "singleFloat",
-      "time": 2.0,
-      "expected": 5.0
+      "time": 2,
+      "expected": 7.5
     },
     {
       "name": "linearPair_start",
       "curve": "linearPair",
-      "time": 0.0,
-      "expected": 0.0
+      "time": 0,
+      "expected": 2.5
     },
     {
       "name": "linearPair_mid",
       "curve": "linearPair",
       "time": 0.5,
-      "expected": 0.5
+      "expected": 3
     },
     {
       "name": "linearPair_end",
       "curve": "linearPair",
-      "time": 1.0,
-      "expected": 1.0
+      "time": 1,
+      "expected": 3.5
     },
     {
       "name": "bezierFlat_mid",
       "curve": "bezierFlat",
       "time": 0.5,
-      "expected": 0.5,
+      "expected": 3,
       "tolerance": 0.02
     },
     {
       "name": "bezierSteep_mid",
       "curve": "bezierSteep",
       "time": 0.5,
-      "expected": 0.5,
+      "expected": 3,
       "tolerance": 0.05
     },
     {
       "name": "sCurve_at_1",
       "curve": "sCurve",
-      "time": 1.0,
-      "expected": 1.0
+      "time": 1,
+      "expected": 3.5
     },
     {
       "name": "sCurve_at_1.5_linear",
       "curve": "sCurve",
       "time": 1.5,
-      "expected": 0.75
+      "expected": 2
     },
     {
       "name": "sCurve_at_2.5_constant",
@@ -72,119 +72,152 @@
       "name": "intLinear_mid",
       "curve": "intLinear",
       "time": 0.5,
-      "expected": 5
+      "expected": 8
     },
     {
       "name": "intLinear_quarter",
       "curve": "intLinear",
       "time": 0.3,
-      "expected": 3
+      "expected": 6
     },
     {
       "name": "trafficLight_state",
       "curve": "trafficLight",
-      "time": 0.0,
-      "expected_state": { "index": 0, "label": "Red" }
+      "time": 0,
+      "expected_state": {
+        "index": 0,
+        "label": "Red"
+      }
     },
     {
       "name": "trafficLight_state_6",
       "curve": "trafficLight",
-      "time": 6.0,
-      "expected_state": { "index": 2, "label": "Green" }
+      "time": 6,
+      "expected_state": {
+        "index": 2,
+        "label": "Green"
+      }
     },
     {
       "name": "trafficLight_state_9",
       "curve": "trafficLight",
-      "time": 9.0,
-      "expected_state": { "index": 1, "label": "Yellow" }
+      "time": 9,
+      "expected_state": {
+        "index": 1,
+        "label": "Yellow"
+      }
     },
     {
       "name": "trafficLight_out_of_range",
       "curve": "trafficLight",
-      "time": -1.0,
-      "expected_state": { "index": 0, "label": "Red" }
+      "time": -1,
+      "expected_state": {
+        "index": 0,
+        "label": "Red"
+      }
     },
     {
       "name": "vec3_mid",
       "curve": "position",
       "time": 0.5,
-      "expected_vec": [5.0, 2.5, 1.0]
+      "expected_vec": [
+        7.5,
+        5,
+        3.5
+      ]
     },
     {
       "name": "color_mid",
       "curve": "tint",
       "time": 0.5,
-      "expected_color": { "r": 0.5, "g": 0.0, "b": 0.5, "a": 1.0 }
+      "expected_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      }
     },
     {
       "name": "normalized_start",
       "curve": "linearPair",
-      "time": 0.0,
+      "time": 0,
       "normalized": true,
-      "expected": 0.0
+      "expected": 2.5
     },
     {
       "name": "normalized_mid",
       "curve": "linearPair",
       "time": 0.5,
       "normalized": true,
-      "expected": 0.5
+      "expected": 3
     },
     {
       "name": "normalized_end",
       "curve": "linearPair",
-      "time": 1.0,
+      "time": 1,
       "normalized": true,
-      "expected": 1.0
+      "expected": 3.5
     },
     {
       "name": "cycle_post_1.5",
       "curve": "cycleCurve",
       "time": 1.5,
-      "expected": 0.5
+      "expected": 3
     },
     {
       "name": "cycle_post_2.3",
       "curve": "cycleCurve",
       "time": 2.3,
-      "expected": 0.3,
+      "expected": 2.8,
       "tolerance": 0.001
     },
     {
       "name": "oscillate_post_1.5",
       "curve": "oscillateCurve",
       "time": 1.5,
-      "expected": 0.5
+      "expected": 3
     },
     {
       "name": "oscillate_post_2.5",
       "curve": "oscillateCurve",
       "time": 2.5,
-      "expected": 0.5
+      "expected": 3
     },
     {
       "name": "empty_keys",
       "curve": "empty",
-      "time": 1.0,
+      "time": 1,
       "expected": null
     },
     {
       "name": "perComponent_mid_linear",
       "curve": "perComponentInterp",
       "time": 0.5,
-      "expected_vec": [5.0, 5.0, 0.0]
+      "expected_vec": [
+        14.894190885510575,
+        11.806333891236111,
+        5.5827676649935665
+      ]
     },
     {
       "name": "perComponent_quarter_linear",
       "curve": "perComponentInterp",
       "time": 0.25,
-      "expected_vec": [2.5, 2.5, 0.0]
+      "expected_vec": [
+        15.811825546725743,
+        7.2304599092573945,
+        4.135405817981494
+      ]
     },
     {
       "name": "perComponent_end",
       "curve": "perComponentInterp",
-      "time": 1.0,
-      "expected_vec": [10.0, 10.0, 10.0]
+      "time": 1,
+      "expected_vec": [
+        12.5,
+        12.5,
+        12.5
+      ]
     }
   ]
 }

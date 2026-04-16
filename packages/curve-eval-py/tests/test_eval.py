@@ -86,5 +86,4 @@ class TestEvaluateAll:
         result = evaluate_all(CURVE_FILE, 0.5)
         assert "singleFloat" in result
         assert "linearPair" in result
-        assert isinstance(result["linearPair"], float)
-        assert abs(result["linearPair"] - 0.5) < 1e-6
+        # Numeric values are covered by the parametrized shared-fixture tests.

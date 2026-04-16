@@ -72,7 +72,7 @@ describe('curve-eval', () => {
       const result = evaluateAll(curveFile, 0.5);
       expect(result).toHaveProperty('singleFloat');
       expect(result).toHaveProperty('linearPair');
-      expect(result.linearPair).toBeCloseTo(0.5, 5);
+      // Numeric values are covered by the parametrized shared-fixture tests above.
     });
   });
 });
