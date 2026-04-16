@@ -1,0 +1,40 @@
+{
+  "name": "curve-eval",
+  "version": "1.0.0",
+  "description": "Evaluate .curve.json animation curves at any time — supports bezier, linear, constant interpolation with float, int, vec, and color types.",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "curve",
+    "animation",
+    "bezier",
+    "interpolation",
+    "keyframe",
+    "game-dev"
+  ],
+  "author": "Glen Rhodes / Tiny Moosh Games Inc.",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "esbuild": "^0.20.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.3.0"
+  }
+}

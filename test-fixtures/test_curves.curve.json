@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "curves": [
+    {
+      "name": "singleFloat",
+      "type": "float",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 1.0, "value": 5.0, "interp": "bezier", "tangentMode": "auto" }
+      ]
+    },
+    {
+      "name": "linearPair",
+      "type": "float",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0.0, "value": 0.0, "interp": "linear", "tangentMode": "auto" },
+        { "time": 1.0, "value": 1.0, "interp": "linear", "tangentMode": "auto" }
+      ]
+    },
+    {
+      "name": "bezierFlat",
+      "type": "float",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0.0, "value": 0.0, "interp": "bezier", "tangentMode": "user", "tangentOut": { "dx": 0.333, "dy": 0.0 } },
+        { "time": 1.0, "value": 1.0, "interp": "bezier", "tangentMode": "user", "tangentIn": { "dx": -0.333, "dy": 0.0 } }
+      ]
+    },
+    {
+      "name": "bezierSteep",
+      "type": "float",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0.0, "value": 0.0, "interp": "bezier", "tangentMode": "user", "tangentOut": { "dx": 0.1, "dy": 0.9 } },
+        { "time": 1.0, "value": 1.0, "interp": "bezier", "tangentMode": "user", "tangentIn": { "dx": -0.1, "dy": -0.9 } }
+      ]
+    },
+    {
+      "name": "sCurve",
+      "type": "float",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0.0, "value": 0.0, "interp": "bezier", "tangentMode": "auto" },
+        { "time": 1.0, "value": 1.0, "interp": "linear", "tangentMode": "auto" },
+        { "time": 2.0, "value": 0.5, "interp": "constant", "tangentMode": "auto" },
+        { "time": 3.0, "value": 0.8, "interp": "bezier", "tangentMode": "auto" }
+      ]
+    },
+    {
+      "name": "intLinear",
+      "type": "int",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0.0, "value": 0, "interp": "linear" },
+        { "time": 1.0, "value": 10, "interp": "linear" }
+      ]
+    },
+    {
+      "name": "trafficLight",
+      "type": "int",
+      "states": {
+        "count": 3,
+        "labels": ["Red", "Yellow", "Green"]
+      },
+      "range": { "min": 0, "max": 2 },
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0.0, "value": 0, "interp": "constant" },
+        { "time": 5.0, "value": 2, "interp": "constant" },
+        { "time": 8.0, "value": 1, "interp": "constant" },
+        { "time": 12.0, "value": 0, "interp": "constant" }
+      ]
+    },
+    {
+      "name": "position",
+      "type": "vec3",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0.0, "value": [0.0, 0.0, 0.0], "interp": "linear", "tangentMode": "auto" },
+        { "time": 1.0, "value": [10.0, 5.0, 2.0], "interp": "linear", "tangentMode": "auto" }
+      ]
+    },
+    {
+      "name": "tint",
+      "type": "color",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0.0, "value": [1.0, 0.0, 0.0, 1.0], "interp": "linear", "tangentMode": "auto" },
+        { "time": 1.0, "value": [0.0, 0.0, 1.0, 1.0], "interp": "linear", "tangentMode": "auto" }
+      ]
+    },
+    {
+      "name": "cycleCurve",
+      "type": "float",
+      "preInfinity": "cycle",
+      "postInfinity": "cycle",
+      "keys": [
+        { "time": 0.0, "value": 0.0, "interp": "linear", "tangentMode": "auto" },
+        { "time": 1.0, "value": 1.0, "interp": "linear", "tangentMode": "auto" }
+      ]
+    },
+    {
+      "name": "oscillateCurve",
+      "type": "float",
+      "preInfinity": "oscillate",
+      "postInfinity": "oscillate",
+      "keys": [
+        { "time": 0.0, "value": 0.0, "interp": "linear", "tangentMode": "auto" },
+        { "time": 1.0, "value": 1.0, "interp": "linear", "tangentMode": "auto" }
+      ]
+    },
+    {
+      "name": "empty",
+      "type": "float",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": []
+    }
+  ]
+}

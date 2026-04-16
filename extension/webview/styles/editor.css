@@ -1,0 +1,503 @@
+/* ── Theme Variables ── */
+:root {
+  --curve-bg: var(--vscode-editor-background, #1e1e1e);
+  --curve-grid: rgba(128, 128, 128, 0.15);
+  --curve-grid-major: rgba(128, 128, 128, 0.35);
+  --curve-text: var(--vscode-editor-foreground, #cccccc);
+  --key-selected: var(--vscode-focusBorder, #007acc);
+  --key-handle: var(--vscode-textLink-foreground, #3794ff);
+  --panel-bg: var(--vscode-sideBar-background, #252526);
+  --panel-border: var(--vscode-panel-border, #3c3c3c);
+  --input-bg: var(--vscode-input-background, #3c3c3c);
+  --input-fg: var(--vscode-input-foreground, #cccccc);
+  --input-border: var(--vscode-input-border, #555555);
+  --btn-bg: var(--vscode-button-secondaryBackground, #3a3d41);
+  --btn-fg: var(--vscode-button-secondaryForeground, #cccccc);
+  --btn-hover: var(--vscode-button-secondaryHoverBackground, #45494e);
+  --btn-primary-bg: var(--vscode-button-background, #0e639c);
+  --btn-primary-fg: var(--vscode-button-foreground, #ffffff);
+  --dropdown-bg: var(--vscode-dropdown-background, #3c3c3c);
+  --dropdown-fg: var(--vscode-dropdown-foreground, #cccccc);
+  --dropdown-border: var(--vscode-dropdown-border, #555555);
+  --list-hover: var(--vscode-list-hoverBackground, #2a2d2e);
+  --list-active: var(--vscode-list-activeSelectionBackground, #094771);
+  --list-active-fg: var(--vscode-list-activeSelectionForeground, #ffffff);
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+  color: var(--curve-text);
+  background: var(--curve-bg);
+}
+
+/* ── Main Layout ── */
+#curve-editor-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 36px;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  border-right: 1px solid var(--panel-border);
+}
+
+.toolbar-group:last-child {
+  border-right: none;
+}
+
+.toolbar-label {
+  font-size: 11px;
+  color: var(--curve-text);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.toolbar-btn {
+  padding: 3px 8px;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.toolbar-btn:hover {
+  background: var(--btn-hover);
+}
+
+.toolbar-btn.active {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+}
+
+.toolbar-select {
+  padding: 2px 4px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  min-width: 70px;
+}
+
+/* ── Dropdown ── */
+.dropdown-wrapper {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  background: var(--dropdown-bg);
+  border: 1px solid var(--dropdown-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 120px;
+  padding: 4px 0;
+}
+
+.dropdown-item {
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--dropdown-fg);
+}
+
+.dropdown-item:hover {
+  background: var(--list-hover);
+}
+
+/* ── Content Area ── */
+.editor-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.curve-list {
+  width: 160px;
+  min-width: 120px;
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.curve-list-header {
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.6;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.curve-list-items {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.curve-list-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  border-bottom: 1px solid transparent;
+}
+
+.curve-list-item:hover {
+  background: var(--list-hover);
+}
+
+.curve-list-item.selected {
+  background: var(--list-active);
+  color: var(--list-active-fg);
+}
+
+.curve-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.curve-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.curve-type-badge {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 0.5;
+  text-transform: uppercase;
+}
+
+.curve-vis-btn,
+.curve-del-btn {
+  background: none;
+  border: none;
+  color: var(--curve-text);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  opacity: 0.5;
+  line-height: 1;
+}
+
+.curve-vis-btn:hover,
+.curve-del-btn:hover {
+  opacity: 1;
+}
+
+.curve-vis-btn.visible {
+  opacity: 0.9;
+}
+
+.curve-list-empty {
+  padding: 16px 10px;
+  font-size: 11px;
+  opacity: 0.5;
+  text-align: center;
+}
+
+/* ── Canvas Container ── */
+.canvas-container {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Key Inspector ── */
+.key-inspector {
+  background: var(--panel-bg);
+  border-top: 1px solid var(--panel-border);
+  padding: 6px 12px;
+  flex-shrink: 0;
+  min-height: 52px;
+}
+
+.inspector-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.6;
+  margin-bottom: 6px;
+}
+
+.inspector-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+}
+
+.inspector-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inspector-label {
+  font-size: 11px;
+  opacity: 0.7;
+  min-width: 32px;
+  white-space: nowrap;
+}
+
+.inspector-input {
+  width: 72px;
+  padding: 2px 6px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.inspector-input:focus {
+  outline: 1px solid var(--key-selected);
+}
+
+.inspector-input:disabled {
+  opacity: 0.4;
+}
+
+.inspector-select {
+  padding: 2px 4px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  font-size: 12px;
+  min-width: 70px;
+}
+
+.inspector-select:disabled {
+  opacity: 0.4;
+}
+
+.inspector-tangent-section {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+}
+
+.inspector-section-label {
+  font-size: 11px;
+  opacity: 0.7;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.inspector-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.5);
+}
+
+/* ── Context Menu ── */
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 160px;
+  background: var(--dropdown-bg);
+  border: 1px solid var(--dropdown-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--dropdown-fg);
+}
+
+.context-submenu {
+  position: absolute;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+}
+
+.context-menu-item:hover {
+  background: var(--list-hover);
+}
+
+.context-menu-item.has-submenu {
+  padding-right: 24px;
+}
+
+.context-menu-arrow {
+  position: absolute;
+  right: 8px;
+  font-size: 8px;
+  opacity: 0.6;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: var(--panel-border);
+  margin: 4px 8px;
+}
+
+.context-menu-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ── Curve List Enhancements ── */
+.curve-icon-btn {
+  background: none;
+  border: none;
+  color: var(--curve-text);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+  opacity: 0.35;
+  line-height: 1;
+}
+
+.curve-icon-btn:hover {
+  opacity: 0.8;
+}
+
+.curve-icon-btn.active {
+  opacity: 0.9;
+}
+
+.curve-list-item.dragging {
+  opacity: 0.4;
+}
+
+.curve-list-item.drag-over {
+  border-top: 2px solid var(--key-selected);
+}
+
+.curve-rename-input {
+  width: 100%;
+  padding: 1px 4px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--key-selected);
+  border-radius: 2px;
+  font-size: 12px;
+  outline: none;
+}
+
+/* ── Component Sub-Items ── */
+.curve-component-item {
+  padding-left: 20px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.component-indent {
+  opacity: 0.3;
+  margin-right: 4px;
+  font-size: 10px;
+}
+
+/* ── Color Picker ── */
+.color-picker-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.color-swatch-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.color-swatch-btn:focus {
+  outline: 1px solid var(--key-selected);
+}
+
+.color-hex-input {
+  width: 70px;
+  padding: 2px 6px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: monospace;
+}

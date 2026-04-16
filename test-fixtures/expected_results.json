@@ -1,0 +1,172 @@
+{
+  "tests": [
+    {
+      "name": "singleFloat_before",
+      "curve": "singleFloat",
+      "time": 0.0,
+      "expected": 5.0
+    },
+    {
+      "name": "singleFloat_at",
+      "curve": "singleFloat",
+      "time": 1.0,
+      "expected": 5.0
+    },
+    {
+      "name": "singleFloat_after",
+      "curve": "singleFloat",
+      "time": 2.0,
+      "expected": 5.0
+    },
+    {
+      "name": "linearPair_start",
+      "curve": "linearPair",
+      "time": 0.0,
+      "expected": 0.0
+    },
+    {
+      "name": "linearPair_mid",
+      "curve": "linearPair",
+      "time": 0.5,
+      "expected": 0.5
+    },
+    {
+      "name": "linearPair_end",
+      "curve": "linearPair",
+      "time": 1.0,
+      "expected": 1.0
+    },
+    {
+      "name": "bezierFlat_mid",
+      "curve": "bezierFlat",
+      "time": 0.5,
+      "expected": 0.5,
+      "tolerance": 0.02
+    },
+    {
+      "name": "bezierSteep_mid",
+      "curve": "bezierSteep",
+      "time": 0.5,
+      "expected": 0.5,
+      "tolerance": 0.05
+    },
+    {
+      "name": "sCurve_at_1",
+      "curve": "sCurve",
+      "time": 1.0,
+      "expected": 1.0
+    },
+    {
+      "name": "sCurve_at_1.5_linear",
+      "curve": "sCurve",
+      "time": 1.5,
+      "expected": 0.75
+    },
+    {
+      "name": "sCurve_at_2.5_constant",
+      "curve": "sCurve",
+      "time": 2.5,
+      "expected": 0.5
+    },
+    {
+      "name": "intLinear_mid",
+      "curve": "intLinear",
+      "time": 0.5,
+      "expected": 5
+    },
+    {
+      "name": "intLinear_quarter",
+      "curve": "intLinear",
+      "time": 0.3,
+      "expected": 3
+    },
+    {
+      "name": "trafficLight_state",
+      "curve": "trafficLight",
+      "time": 0.0,
+      "expected_state": { "index": 0, "label": "Red" }
+    },
+    {
+      "name": "trafficLight_state_6",
+      "curve": "trafficLight",
+      "time": 6.0,
+      "expected_state": { "index": 2, "label": "Green" }
+    },
+    {
+      "name": "trafficLight_state_9",
+      "curve": "trafficLight",
+      "time": 9.0,
+      "expected_state": { "index": 1, "label": "Yellow" }
+    },
+    {
+      "name": "trafficLight_out_of_range",
+      "curve": "trafficLight",
+      "time": -1.0,
+      "expected_state": { "index": 0, "label": "Red" }
+    },
+    {
+      "name": "vec3_mid",
+      "curve": "position",
+      "time": 0.5,
+      "expected_vec": [5.0, 2.5, 1.0]
+    },
+    {
+      "name": "color_mid",
+      "curve": "tint",
+      "time": 0.5,
+      "expected_color": { "r": 0.5, "g": 0.0, "b": 0.5, "a": 1.0 }
+    },
+    {
+      "name": "normalized_start",
+      "curve": "linearPair",
+      "time": 0.0,
+      "normalized": true,
+      "expected": 0.0
+    },
+    {
+      "name": "normalized_mid",
+      "curve": "linearPair",
+      "time": 0.5,
+      "normalized": true,
+      "expected": 0.5
+    },
+    {
+      "name": "normalized_end",
+      "curve": "linearPair",
+      "time": 1.0,
+      "normalized": true,
+      "expected": 1.0
+    },
+    {
+      "name": "cycle_post_1.5",
+      "curve": "cycleCurve",
+      "time": 1.5,
+      "expected": 0.5
+    },
+    {
+      "name": "cycle_post_2.3",
+      "curve": "cycleCurve",
+      "time": 2.3,
+      "expected": 0.3,
+      "tolerance": 0.001
+    },
+    {
+      "name": "oscillate_post_1.5",
+      "curve": "oscillateCurve",
+      "time": 1.5,
+      "expected": 0.5
+    },
+    {
+      "name": "oscillate_post_2.5",
+      "curve": "oscillateCurve",
+      "time": 2.5,
+      "expected": 0.5
+    },
+    {
+      "name": "empty_keys",
+      "curve": "empty",
+      "time": 1.0,
+      "expected": null
+    }
+  ]
+}

@@ -1,0 +1,368 @@
+import { EditorState } from '../state/EditorState';
+import { KeyFrame, JsonPatchOp, InterpolationMode, TangentMode, TangentHandle } from '../../src/protocol';
+
+type PostEditFn = (ops: JsonPatchOp[]) => void;
+
+export class KeyInspector {
+  private container: HTMLElement;
+  private contentEl: HTMLElement;
+
+  constructor(
+    parent: HTMLElement,
+    private state: EditorState,
+    private postEdit: PostEditFn
+  ) {
+    this.container = document.createElement('div');
+    this.container.className = 'key-inspector';
+    this.container.setAttribute('role', 'region');
+    this.container.setAttribute('aria-label', 'Key inspector panel');
+    parent.appendChild(this.container);
+
+    const title = document.createElement('div');
+    title.className = 'inspector-title';
+    title.textContent = 'Key Inspector';
+    this.container.appendChild(title);
+
+    this.contentEl = document.createElement('div');
+    this.contentEl.className = 'inspector-content';
+    this.container.appendChild(this.contentEl);
+
+    state.onChange(() => this.update());
+    this.update();
+  }
+
+  private update(): void {
+    const { state } = this;
+    const keys = state.selectedKeys;
+
+    this.contentEl.innerHTML = '';
+
+    if (keys.length === 0) {
+      const msg = document.createElement('div');
+      msg.className = 'inspector-empty';
+      msg.textContent = 'No key selected';
+      msg.style.opacity = '0.4';
+      msg.style.fontSize = '11px';
+      msg.style.padding = '4px 0';
+      this.contentEl.appendChild(msg);
+      return;
+    }
+
+    if (keys.length === 1) {
+      this.renderSingleKey(keys[0]);
+    } else {
+      this.renderMultiKey(keys);
+    }
+  }
+
+  private renderSingleKey(sk: { curveIndex: number; keyIndex: number }): void {
+    const { state } = this;
+    const key = state.getKey(sk.curveIndex, sk.keyIndex);
+    const curve = state.doc.curves[sk.curveIndex];
+    const isColor = curve.type === 'color';
+    const isVec = ['vec2', 'vec3', 'vec4', 'color'].includes(curve.type);
+    const isStateCurve = curve.type === 'int' && !!curve.states;
+
+    const grid = document.createElement('div');
+    grid.className = 'inspector-grid';
+
+    // Time field
+    this.addInputField(grid, 'Time', key.time.toFixed(4), (val) => {
+      const numVal = parseFloat(val);
+      if (!isNaN(numVal)) {
+        this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/time`, value: numVal }]);
+      }
+    });
+
+    // Value field(s)
+    if (isStateCurve) {
+      const labels = curve.states!.labels || [];
+      const options = Array.from({ length: curve.states!.count }, (_, i) => ({
+        label: labels[i] || String(i),
+        value: String(i),
+      }));
+      this.addSelectField(grid, 'State', String(key.value), options, (val) => {
+        this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/value`, value: parseInt(val) }]);
+      });
+    } else if (isVec) {
+      const values = key.value as number[];
+      const compNames = isColor ? ['R', 'G', 'B', 'A'] : ['X', 'Y', 'Z', 'W'].slice(0, values.length);
+      for (let ci = 0; ci < values.length; ci++) {
+        this.addInputField(grid, compNames[ci], values[ci].toFixed(4), (val) => {
+          const numVal = parseFloat(val);
+          if (!isNaN(numVal)) {
+            const newValues = [...values];
+            newValues[ci] = numVal;
+            this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/value`, value: newValues }]);
+          }
+        });
+      }
+    } else {
+      this.addInputField(grid, 'Value', (key.value as number).toFixed(4), (val) => {
+        const numVal = parseFloat(val);
+        if (!isNaN(numVal)) {
+          this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/value`, value: numVal }]);
+        }
+      });
+    }
+
+    // Color swatch + hex input for color curves
+    if (isColor) {
+      const values = key.value as number[];
+      const hexColor = rgbaToHex(values[0], values[1], values[2]);
+
+      const colorGroup = document.createElement('div');
+      colorGroup.className = 'color-picker-wrapper';
+
+      const swatch = document.createElement('input');
+      swatch.type = 'color';
+      swatch.className = 'color-swatch-btn';
+      swatch.value = hexColor;
+      swatch.setAttribute('aria-label', 'Color picker');
+      swatch.addEventListener('input', () => {
+        const [r, g, b] = hexToRgb(swatch.value);
+        const newValues = [r, g, b, values[3]];
+        this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/value`, value: newValues }]);
+      });
+      colorGroup.appendChild(swatch);
+
+      const hexInput = document.createElement('input');
+      hexInput.type = 'text';
+      hexInput.className = 'color-hex-input';
+      hexInput.value = hexColor;
+      hexInput.setAttribute('aria-label', 'Hex color value');
+      hexInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const [r, g, b] = hexToRgb(hexInput.value);
+          const newValues = [r, g, b, values[3]];
+          this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/value`, value: newValues }]);
+          hexInput.blur();
+        }
+        e.stopPropagation();
+      });
+      colorGroup.appendChild(hexInput);
+
+      grid.appendChild(colorGroup);
+    }
+
+    // Interpolation
+    this.addSelectField(grid, 'Interp', key.interp, [
+      { label: 'Bezier', value: 'bezier' },
+      { label: 'Linear', value: 'linear' },
+      { label: 'Constant', value: 'constant' },
+    ], (val) => {
+      this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/interp`, value: val }]);
+    });
+
+    // Tangent mode
+    this.addSelectField(grid, 'Tangent', key.tangentMode || 'auto', [
+      { label: 'Auto', value: 'auto' },
+      { label: 'User', value: 'user' },
+      { label: 'Break', value: 'break' },
+      { label: 'Aligned', value: 'aligned' },
+    ], (val) => {
+      this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentMode`, value: val }]);
+    });
+
+    this.contentEl.appendChild(grid);
+
+    // Tangent handles (for bezier)
+    if (key.interp === 'bezier') {
+      const tanSection = document.createElement('div');
+      tanSection.className = 'inspector-tangent-section';
+
+      const tanIn = this.getTangent(key, 'in');
+      const tanOut = this.getTangent(key, 'out');
+
+      const inLabel = document.createElement('span');
+      inLabel.className = 'inspector-section-label';
+      inLabel.textContent = 'Tan In:';
+      tanSection.appendChild(inLabel);
+
+      const inRow = document.createElement('div');
+      inRow.className = 'inspector-row';
+      this.addInputField(inRow, 'dx', tanIn.dx.toFixed(4), (val) => {
+        const numVal = parseFloat(val);
+        if (!isNaN(numVal)) {
+          this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentIn`, value: { dx: numVal, dy: tanIn.dy } }]);
+        }
+      });
+      this.addInputField(inRow, 'dy', tanIn.dy.toFixed(4), (val) => {
+        const numVal = parseFloat(val);
+        if (!isNaN(numVal)) {
+          this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentIn`, value: { dx: tanIn.dx, dy: numVal } }]);
+        }
+      });
+      tanSection.appendChild(inRow);
+
+      const outLabel = document.createElement('span');
+      outLabel.className = 'inspector-section-label';
+      outLabel.textContent = 'Tan Out:';
+      tanSection.appendChild(outLabel);
+
+      const outRow = document.createElement('div');
+      outRow.className = 'inspector-row';
+      this.addInputField(outRow, 'dx', tanOut.dx.toFixed(4), (val) => {
+        const numVal = parseFloat(val);
+        if (!isNaN(numVal)) {
+          this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentOut`, value: { dx: numVal, dy: tanOut.dy } }]);
+        }
+      });
+      this.addInputField(outRow, 'dy', tanOut.dy.toFixed(4), (val) => {
+        const numVal = parseFloat(val);
+        if (!isNaN(numVal)) {
+          this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentOut`, value: { dx: tanOut.dx, dy: numVal } }]);
+        }
+      });
+      tanSection.appendChild(outRow);
+
+      this.contentEl.appendChild(tanSection);
+    }
+  }
+
+  private renderMultiKey(keys: { curveIndex: number; keyIndex: number }[]): void {
+    const { state } = this;
+    const grid = document.createElement('div');
+    grid.className = 'inspector-grid';
+
+    // Time: mixed
+    const timeField = this.addInputField(grid, 'Time', '(mixed)', () => {});
+    timeField.disabled = true;
+
+    // Value: mixed
+    const valField = this.addInputField(grid, 'Value', '(mixed)', () => {});
+    valField.disabled = true;
+
+    // Interp: if all same, show it
+    const interps = new Set(keys.map((sk) => state.getKey(sk.curveIndex, sk.keyIndex).interp));
+    this.addSelectField(grid, 'Interp', interps.size === 1 ? interps.values().next().value! : '', [
+      { label: 'Bezier', value: 'bezier' },
+      { label: 'Linear', value: 'linear' },
+      { label: 'Constant', value: 'constant' },
+    ], (val) => {
+      const ops = keys.map((sk) => ({
+        op: 'replace' as const,
+        path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/interp`,
+        value: val,
+      }));
+      this.postEdit(ops);
+    });
+
+    // Tangent mode
+    const tangentModes = new Set(keys.map((sk) => state.getKey(sk.curveIndex, sk.keyIndex).tangentMode || 'auto'));
+    this.addSelectField(grid, 'Tangent', tangentModes.size === 1 ? tangentModes.values().next().value! : '', [
+      { label: 'Auto', value: 'auto' },
+      { label: 'User', value: 'user' },
+      { label: 'Break', value: 'break' },
+      { label: 'Aligned', value: 'aligned' },
+    ], (val) => {
+      const ops = keys.map((sk) => ({
+        op: 'replace' as const,
+        path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentMode`,
+        value: val,
+      }));
+      this.postEdit(ops);
+    });
+
+    const info = document.createElement('div');
+    info.style.fontSize = '11px';
+    info.style.opacity = '0.5';
+    info.style.padding = '4px 0';
+    info.textContent = `${keys.length} keys selected`;
+    grid.appendChild(info);
+
+    this.contentEl.appendChild(grid);
+  }
+
+  private addInputField(
+    parent: HTMLElement,
+    label: string,
+    value: string,
+    onCommit: (val: string) => void
+  ): HTMLInputElement {
+    const group = document.createElement('div');
+    group.className = 'inspector-field';
+
+    const lbl = document.createElement('label');
+    lbl.className = 'inspector-label';
+    lbl.textContent = label;
+    group.appendChild(lbl);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'inspector-input';
+    input.value = value;
+    input.setAttribute('aria-label', label);
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { onCommit(input.value); input.blur(); }
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const step = e.shiftKey ? 0.1 : 0.01;
+        const delta = e.key === 'ArrowUp' ? step : -step;
+        const current = parseFloat(input.value) || 0;
+        input.value = (current + delta).toFixed(4);
+        onCommit(input.value);
+      }
+      e.stopPropagation();
+    });
+    input.addEventListener('blur', () => onCommit(input.value));
+
+    group.appendChild(input);
+    parent.appendChild(group);
+    return input;
+  }
+
+  private addSelectField(
+    parent: HTMLElement,
+    label: string,
+    value: string,
+    options: { label: string; value: string }[],
+    onChange: (val: string) => void
+  ): HTMLSelectElement {
+    const group = document.createElement('div');
+    group.className = 'inspector-field';
+
+    const lbl = document.createElement('label');
+    lbl.className = 'inspector-label';
+    lbl.textContent = label;
+    group.appendChild(lbl);
+
+    const select = document.createElement('select');
+    select.className = 'inspector-select';
+    select.setAttribute('aria-label', label);
+    for (const opt of options) {
+      const el = document.createElement('option');
+      el.value = opt.value;
+      el.textContent = opt.label;
+      select.appendChild(el);
+    }
+    select.value = value;
+    select.addEventListener('change', () => onChange(select.value));
+
+    group.appendChild(select);
+    parent.appendChild(group);
+    return select;
+  }
+
+  private getTangent(key: KeyFrame, which: 'in' | 'out'): TangentHandle {
+    const tangent = which === 'in' ? key.tangentIn : key.tangentOut;
+    if (!tangent) return { dx: which === 'in' ? -0.1 : 0.1, dy: 0 };
+    if (Array.isArray(tangent)) return tangent[0] || { dx: which === 'in' ? -0.1 : 0.1, dy: 0 };
+    return tangent;
+  }
+}
+
+function rgbaToHex(r: number, g: number, b: number): string {
+  const toHex = (v: number) => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const cleaned = hex.replace('#', '');
+  if (cleaned.length !== 6) return [1, 1, 1];
+  const r = parseInt(cleaned.substring(0, 2), 16) / 255;
+  const g = parseInt(cleaned.substring(2, 4), 16) / 255;
+  const b = parseInt(cleaned.substring(4, 6), 16) / 255;
+  return [r, g, b];
+}

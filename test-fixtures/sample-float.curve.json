@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "curves": [
+    {
+      "name": "fadeIn",
+      "type": "float",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        {
+          "time": 0.0,
+          "value": 0.0,
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 0.5,
+          "value": 0.8,
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1.0,
+          "value": 1.0,
+          "interp": "bezier",
+          "tangentMode": "auto"
+        }
+      ]
+    },
+    {
+      "name": "scaleX",
+      "type": "float",
+      "range": {
+        "min": 0.0,
+        "max": 2.0
+      },
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        {
+          "time": 0.0,
+          "value": 1.0,
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 0.3,
+          "value": 1.2,
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 0.6,
+          "value": 0.9,
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1.0,
+          "value": 1.0,
+          "interp": "linear",
+          "tangentMode": "auto"
+        }
+      ]
+    }
+  ]
+}

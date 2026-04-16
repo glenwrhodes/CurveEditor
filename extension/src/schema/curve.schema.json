@@ -1,0 +1,271 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/GlenRhodesConsulting/curve-editor/curve.schema.json",
+  "title": "Curve File",
+  "description": "Animation curve file format for the VS Code Curve Editor extension",
+  "type": "object",
+  "required": ["version", "curves"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version"
+    },
+    "curves": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/CurveDefinition" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "TangentHandle": {
+      "type": "object",
+      "required": ["dx", "dy"],
+      "properties": {
+        "dx": { "type": "number" },
+        "dy": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "CurveRange": {
+      "type": "object",
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "TimeRange": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "number" },
+        "end": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "StatesDefinition": {
+      "type": "object",
+      "required": ["count"],
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "InterpolationMode": {
+      "type": "string",
+      "enum": ["bezier", "linear", "constant"]
+    },
+    "TangentMode": {
+      "type": "string",
+      "enum": ["auto", "user", "break", "aligned"]
+    },
+    "InfinityMode": {
+      "type": "string",
+      "enum": ["constant", "linear", "cycle", "oscillate"]
+    },
+    "KeyFrameFloat": {
+      "type": "object",
+      "required": ["time", "value", "interp"],
+      "properties": {
+        "time": { "type": "number" },
+        "value": { "type": "number" },
+        "interp": { "$ref": "#/definitions/InterpolationMode" },
+        "tangentMode": { "$ref": "#/definitions/TangentMode" },
+        "tangentIn": { "$ref": "#/definitions/TangentHandle" },
+        "tangentOut": { "$ref": "#/definitions/TangentHandle" }
+      },
+      "additionalProperties": false
+    },
+    "KeyFrameInt": {
+      "type": "object",
+      "required": ["time", "value", "interp"],
+      "properties": {
+        "time": { "type": "number" },
+        "value": { "type": "integer" },
+        "interp": {
+          "type": "string",
+          "enum": ["constant", "linear"]
+        },
+        "tangentMode": { "$ref": "#/definitions/TangentMode" },
+        "tangentIn": { "$ref": "#/definitions/TangentHandle" },
+        "tangentOut": { "$ref": "#/definitions/TangentHandle" }
+      },
+      "additionalProperties": false
+    },
+    "TangentHandleArray2": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TangentHandle" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "TangentHandleArray3": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TangentHandle" },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "TangentHandleArray4": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TangentHandle" },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "KeyFrameVec2": {
+      "type": "object",
+      "required": ["time", "value", "interp"],
+      "properties": {
+        "time": { "type": "number" },
+        "value": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "interp": { "$ref": "#/definitions/InterpolationMode" },
+        "tangentMode": { "$ref": "#/definitions/TangentMode" },
+        "tangentIn": { "$ref": "#/definitions/TangentHandleArray2" },
+        "tangentOut": { "$ref": "#/definitions/TangentHandleArray2" }
+      },
+      "additionalProperties": false
+    },
+    "KeyFrameVec3": {
+      "type": "object",
+      "required": ["time", "value", "interp"],
+      "properties": {
+        "time": { "type": "number" },
+        "value": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "interp": { "$ref": "#/definitions/InterpolationMode" },
+        "tangentMode": { "$ref": "#/definitions/TangentMode" },
+        "tangentIn": { "$ref": "#/definitions/TangentHandleArray3" },
+        "tangentOut": { "$ref": "#/definitions/TangentHandleArray3" }
+      },
+      "additionalProperties": false
+    },
+    "KeyFrameVec4": {
+      "type": "object",
+      "required": ["time", "value", "interp"],
+      "properties": {
+        "time": { "type": "number" },
+        "value": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "interp": { "$ref": "#/definitions/InterpolationMode" },
+        "tangentMode": { "$ref": "#/definitions/TangentMode" },
+        "tangentIn": { "$ref": "#/definitions/TangentHandleArray4" },
+        "tangentOut": { "$ref": "#/definitions/TangentHandleArray4" }
+      },
+      "additionalProperties": false
+    },
+    "KeyFrameColor": {
+      "type": "object",
+      "required": ["time", "value", "interp"],
+      "properties": {
+        "time": { "type": "number" },
+        "value": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0, "maximum": 1 },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "interp": { "$ref": "#/definitions/InterpolationMode" },
+        "tangentMode": { "$ref": "#/definitions/TangentMode" },
+        "tangentIn": { "$ref": "#/definitions/TangentHandleArray4" },
+        "tangentOut": { "$ref": "#/definitions/TangentHandleArray4" }
+      },
+      "additionalProperties": false
+    },
+    "CurveDefinition": {
+      "type": "object",
+      "required": ["name", "type", "keys"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["float", "int", "vec2", "vec3", "vec4", "color"]
+        },
+        "range": { "$ref": "#/definitions/CurveRange" },
+        "timeRange": { "$ref": "#/definitions/TimeRange" },
+        "states": { "$ref": "#/definitions/StatesDefinition" },
+        "preInfinity": { "$ref": "#/definitions/InfinityMode" },
+        "postInfinity": { "$ref": "#/definitions/InfinityMode" },
+        "keys": { "type": "array" }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "float" } } },
+          "then": {
+            "properties": {
+              "keys": { "items": { "$ref": "#/definitions/KeyFrameFloat" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "int" } } },
+          "then": {
+            "properties": {
+              "keys": { "items": { "$ref": "#/definitions/KeyFrameInt" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "vec2" } } },
+          "then": {
+            "properties": {
+              "keys": { "items": { "$ref": "#/definitions/KeyFrameVec2" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "vec3" } } },
+          "then": {
+            "properties": {
+              "keys": { "items": { "$ref": "#/definitions/KeyFrameVec3" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "vec4" } } },
+          "then": {
+            "properties": {
+              "keys": { "items": { "$ref": "#/definitions/KeyFrameVec4" } }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "color" } } },
+          "then": {
+            "properties": {
+              "keys": { "items": { "$ref": "#/definitions/KeyFrameColor" } }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "int" } },
+            "not": { "required": ["states"] }
+          },
+          "then": {},
+          "else": {}
+        }
+      ]
+    }
+  }
+}

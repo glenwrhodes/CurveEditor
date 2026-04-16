@@ -1,0 +1,122 @@
+{
+  "name": "curve-editor",
+  "displayName": "Curve Editor",
+  "description": "Visual curve editor for .curve.json files — define animation curves, parameter envelopes, and state timelines with bezier, linear, and constant interpolation.",
+  "version": "0.1.0",
+  "publisher": "GlenRhodesConsulting",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "activationEvents": [
+    "onCustomEditor:curveEditor.curveView"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "curveEditor.curveView",
+        "displayName": "Curve Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.curve.json"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      {
+        "command": "curveEditor.newFile",
+        "title": "Curve Editor: New Curve File"
+      },
+      {
+        "command": "curveEditor.addCurve",
+        "title": "Curve Editor: Add Curve"
+      },
+      {
+        "command": "curveEditor.frameAll",
+        "title": "Curve Editor: Frame All"
+      },
+      {
+        "command": "curveEditor.frameSelection",
+        "title": "Curve Editor: Frame Selection"
+      },
+      {
+        "command": "curveEditor.flattenTangents",
+        "title": "Curve Editor: Flatten Tangents"
+      }
+    ],
+    "configuration": {
+      "title": "Curve Editor",
+      "properties": {
+        "curveEditor.snapTimeInterval": {
+          "type": "number",
+          "default": 0.1,
+          "description": "Time snap increment"
+        },
+        "curveEditor.snapValueInterval": {
+          "type": "number",
+          "default": 0.1,
+          "description": "Value snap increment"
+        },
+        "curveEditor.defaultInterpolation": {
+          "type": "string",
+          "enum": [
+            "bezier",
+            "linear",
+            "constant"
+          ],
+          "default": "bezier",
+          "description": "Default interpolation for new float keys"
+        },
+        "curveEditor.defaultTangentMode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "user",
+            "break",
+            "aligned"
+          ],
+          "default": "auto",
+          "description": "Default tangent mode for new keys"
+        },
+        "curveEditor.showGridLabels": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show axis labels on the grid"
+        },
+        "curveEditor.curveLineWidth": {
+          "type": "number",
+          "default": 2,
+          "description": "Curve line thickness in pixels"
+        },
+        "curveEditor.antiAlias": {
+          "type": "boolean",
+          "default": true,
+          "description": "Canvas anti-aliasing"
+        }
+      }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "*.curve.json",
+        "url": "./src/schema/curve.schema.json"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "watch": "node esbuild.config.mjs --watch",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}
