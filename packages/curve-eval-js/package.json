@@ -1,6 +1,6 @@
 {
   "name": "curve-eval",
-  "version": "1.0.0",
+  "version": "0.1.2",
   "description": "Evaluate .curve.json animation curves at any time — supports bezier, linear, constant interpolation with float, int, vec, and color types.",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
