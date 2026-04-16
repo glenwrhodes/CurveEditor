@@ -2,6 +2,11 @@
 
 A visual curve editor for `.curve.json` files. Define animation curves, parameter envelopes, and state timelines using keyframes with bezier, linear, or constant interpolation — similar to Unreal Engine's curve editor.
 
+![Curve Editor screenshot](assets/screenshot.png)
+
+- Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=TinyMooshGamesInc.curve-editor)
+- Runtime evaluation libraries: [`curve-eval` on npm](https://www.npmjs.com/package/curve-eval) and [`curve-eval` on PyPI](https://pypi.org/project/curve-eval/)
+
 ## Features
 
 - **Visual curve editing** — Canvas-based editor with grid, pan, zoom, and keyframe manipulation
