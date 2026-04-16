@@ -30,3 +30,6 @@ npm-debug.log*
 # Environment
 .env
 .env.*
+
+# Local-only publish tooling — kept off the public repo
+publish-all.ps1
