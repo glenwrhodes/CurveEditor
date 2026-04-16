@@ -76,20 +76,24 @@ export class CurveList {
     const { state } = this;
     const anyVisible = state.doc.curves.some((_, i) => state.isCurveVisible(i));
     const newValue = !anyVisible;
-    for (let i = 0; i < state.doc.curves.length; i++) {
-      state.curveVisibility.set(i, newValue);
-    }
-    state.markDirty();
+    const ops: JsonPatchOp[] = state.doc.curves.map((_, i) => ({
+      op: 'replace' as const,
+      path: `/curves/${i}/visible`,
+      value: newValue,
+    }));
+    this.postEdit(ops);
   }
 
   private toggleAllLock(): void {
     const { state } = this;
     const anyLocked = state.doc.curves.some((_, i) => state.isCurveLocked(i));
     const newValue = !anyLocked;
-    for (let i = 0; i < state.doc.curves.length; i++) {
-      state.curveLocked.set(i, newValue);
-    }
-    state.markDirty();
+    const ops: JsonPatchOp[] = state.doc.curves.map((_, i) => ({
+      op: 'replace' as const,
+      path: `/curves/${i}/locked`,
+      value: newValue,
+    }));
+    this.postEdit(ops);
   }
 
   private render(): void {
@@ -213,8 +217,12 @@ export class CurveList {
       visBtn.innerHTML = isVisible ? '&#x1F441;' : '&#x25CB;';
       visBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        state.curveVisibility.set(i, !isVisible);
+        const newVal = !isVisible;
+        // Optimistic update: set runtime override so the UI flips instantly
+        state.curveVisibility.set(i, newVal);
         state.markDirty();
+        // Persist to the document
+        this.postEdit([{ op: 'replace', path: `/curves/${i}/visible`, value: newVal }]);
       });
       row.appendChild(visBtn);
 
@@ -225,8 +233,10 @@ export class CurveList {
       lockBtn.innerHTML = isLocked ? '&#x1F512;' : '&#x1F513;';
       lockBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        state.curveLocked.set(i, !isLocked);
+        const newVal = !isLocked;
+        state.curveLocked.set(i, newVal);
         state.markDirty();
+        this.postEdit([{ op: 'replace', path: `/curves/${i}/locked`, value: newVal }]);
       });
       row.appendChild(lockBtn);
 
@@ -464,6 +474,7 @@ export class CurveList {
         action: () => {
           this.state.curveColorOverride.set(curveIndex, c);
           this.state.markDirty();
+          this.postEdit([{ op: 'replace', path: `/curves/${curveIndex}/color`, value: c }]);
         }
       }))},
       { type: 'separator' as const },

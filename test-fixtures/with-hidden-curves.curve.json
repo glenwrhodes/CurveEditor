@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "curves": [
+    {
+      "name": "hiddenCurve",
+      "type": "float",
+      "visible": false,
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0, "value": 0, "interp": "linear", "tangentMode": "auto" },
+        { "time": 1, "value": 1, "interp": "linear", "tangentMode": "auto" }
+      ]
+    },
+    {
+      "name": "lockedCurve",
+      "type": "float",
+      "locked": true,
+      "color": "#ff00ff",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0, "value": 0.2, "interp": "linear", "tangentMode": "auto" },
+        { "time": 1, "value": 0.8, "interp": "linear", "tangentMode": "auto" }
+      ]
+    },
+    {
+      "name": "visibleCurve",
+      "type": "float",
+      "visible": true,
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        { "time": 0, "value": 0.5, "interp": "linear", "tangentMode": "auto" },
+        { "time": 1, "value": 0.3, "interp": "linear", "tangentMode": "auto" }
+      ]
+    }
+  ]
+}

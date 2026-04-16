@@ -47,6 +47,12 @@ export interface CurveDefinition {
   states?: StatesDefinition;
   preInfinity?: InfinityMode;
   postInfinity?: InfinityMode;
+  /** Optional — UI visibility state (default true if absent). */
+  visible?: boolean;
+  /** Optional — UI lock state (default false if absent). */
+  locked?: boolean;
+  /** Optional — user-picked hex color override (default auto-assigned from palette). */
+  color?: string;
   keys: KeyFrame[];
 }
 

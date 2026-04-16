@@ -249,6 +249,9 @@
         "states": { "$ref": "#/definitions/StatesDefinition" },
         "preInfinity": { "$ref": "#/definitions/InfinityMode" },
         "postInfinity": { "$ref": "#/definitions/InfinityMode" },
+        "visible": { "type": "boolean" },
+        "locked": { "type": "boolean" },
+        "color": { "type": "string" },
         "keys": { "type": "array" }
       },
       "additionalProperties": false,

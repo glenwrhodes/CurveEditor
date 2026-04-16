@@ -62,7 +62,9 @@
           "interp": "linear",
           "tangentMode": "auto"
         }
-      ]
+      ],
+      "visible": false,
+      "locked": true
     },
     {
       "name": "position",
@@ -111,9 +113,9 @@
         {
           "time": 1,
           "value": [
-            5,
+            5.1000000000000005,
             2,
-            0
+            0.5
           ],
           "interp": "bezier",
           "tangentMode": "user",
@@ -141,8 +143,8 @@
               "dy": 0
             },
             {
-              "dx": 0.6749999999999998,
-              "dy": 0.001666870117187469
+              "dx": 0.8399999999999999,
+              "dy": -0.25333312988281254
             }
           ]
         },

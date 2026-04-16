@@ -110,16 +110,9 @@ export class EditorState {
 
   updateDoc(doc: CurveFile): void {
     this.doc = doc;
-    // Auto-select and auto-show first curve if nothing selected
+    // Auto-select first curve if nothing selected
     if (this.selectedCurves.size === 0 && doc.curves.length > 0) {
       this.selectedCurves.add(0);
-      this.curveVisibility.set(0, true);
-    }
-    // Ensure new curves are visible by default
-    for (let i = 0; i < doc.curves.length; i++) {
-      if (!this.curveVisibility.has(i)) {
-        this.curveVisibility.set(i, true);
-      }
     }
     // Prune invalid selections
     this.selectedKeys = this.selectedKeys.filter(
@@ -128,6 +121,11 @@ export class EditorState {
         sk.keyIndex < doc.curves[sk.curveIndex].keys.length
     );
     this.previewKeyOverrides.clear();
+    // Clear runtime optimistic overrides; the document is now the source of truth
+    // for visibility, lock, and color.
+    this.curveVisibility.clear();
+    this.curveLocked.clear();
+    this.curveColorOverride.clear();
     this.markDirty();
   }
 
@@ -137,16 +135,30 @@ export class EditorState {
   }
 
   getCurveColor(index: number): string {
-    return this.curveColorOverride.get(index) || CURVE_PALETTE[index % CURVE_PALETTE.length];
+    const curve = this.doc.curves[index];
+    // Precedence: runtime override (during a palette change before commit) → persisted color → palette default
+    return (
+      this.curveColorOverride.get(index) ||
+      curve?.color ||
+      CURVE_PALETTE[index % CURVE_PALETTE.length]
+    );
   }
 
   isCurveVisible(index: number): boolean {
-    const vis = this.curveVisibility.get(index);
-    return vis !== undefined ? vis : this.selectedCurves.has(index);
+    const curve = this.doc.curves[index];
+    if (!curve) return false;
+    // Runtime override first (optimistic UI during pending commit), then persisted field
+    const override = this.curveVisibility.get(index);
+    if (override !== undefined) return override;
+    return curve.visible !== false; // default true
   }
 
   isCurveLocked(index: number): boolean {
-    return this.curveLocked.get(index) || false;
+    const curve = this.doc.curves[index];
+    if (!curve) return false;
+    const override = this.curveLocked.get(index);
+    if (override !== undefined) return override;
+    return curve.locked === true; // default false
   }
 
   isComponentVisible(curveIndex: number, componentIndex: number): boolean {
