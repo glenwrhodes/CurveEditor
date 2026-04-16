@@ -1,6 +1,7 @@
 import { EditorState } from '../state/EditorState';
 import { JsonPatchOp, CurveType } from '../../src/protocol';
 import { ContextMenu } from './ContextMenu';
+import { StatesModal } from './StatesModal';
 
 type PostEditFn = (ops: JsonPatchOp[]) => void;
 type PostCommandFn = (msg: any) => void;
@@ -9,6 +10,8 @@ const CURVE_PALETTE = [
   '#e06c75', '#61afef', '#98c379', '#e5c07b', '#c678dd',
   '#56b6c2', '#d19a66', '#be5046', '#7ec699', '#f0c674',
 ];
+
+const STATE_COLORS = CURVE_PALETTE;
 
 export class CurveList {
   private container: HTMLElement;
@@ -28,7 +31,18 @@ export class CurveList {
 
     const header = document.createElement('div');
     header.className = 'curve-list-header';
-    header.textContent = 'Curves';
+
+    const headerLabel = document.createElement('span');
+    headerLabel.textContent = 'Curves';
+    header.appendChild(headerLabel);
+
+    const toggleAllBtn = document.createElement('button');
+    toggleAllBtn.className = 'curve-list-toggle-all';
+    toggleAllBtn.setAttribute('aria-label', 'Toggle visibility of all curves');
+    toggleAllBtn.addEventListener('click', () => this.toggleAllVisibility());
+    header.appendChild(toggleAllBtn);
+    this.toggleAllBtn = toggleAllBtn;
+
     this.container.appendChild(header);
 
     this.listEl = document.createElement('div');
@@ -41,9 +55,37 @@ export class CurveList {
     this.render();
   }
 
+  private toggleAllBtn!: HTMLButtonElement;
+
+  /** Tracks the last click on a curve row for manual double-click detection.
+   *  We need this because markDirty() re-renders the list between clicks,
+   *  destroying the DOM element and breaking the native dblclick event. */
+  private lastClickedCurveIndex: number | null = null;
+  private lastClickTime = 0;
+  private readonly DOUBLE_CLICK_MS = 400;
+
+  private toggleAllVisibility(): void {
+    const { state } = this;
+    const anyVisible = state.doc.curves.some((_, i) => state.isCurveVisible(i));
+    const newValue = !anyVisible;
+    for (let i = 0; i < state.doc.curves.length; i++) {
+      state.curveVisibility.set(i, newValue);
+    }
+    state.markDirty();
+  }
+
   private render(): void {
     const { state, listEl } = this;
     listEl.innerHTML = '';
+
+    // Update the global visibility toggle button
+    const anyVisible = state.doc.curves.some((_, i) => state.isCurveVisible(i));
+    this.toggleAllBtn.innerHTML = anyVisible ? '&#x1F441;' : '&#x25CB;';
+    this.toggleAllBtn.classList.toggle('active', anyVisible);
+    this.toggleAllBtn.setAttribute(
+      'aria-label',
+      anyVisible ? 'Hide all curves' : 'Show all curves'
+    );
 
     for (let i = 0; i < state.doc.curves.length; i++) {
       const curve = state.doc.curves[i];
@@ -99,9 +141,33 @@ export class CurveList {
       const nameEl = document.createElement('span');
       nameEl.className = 'curve-name';
       nameEl.textContent = curve.name;
+      nameEl.title = 'Double-click to rename';
       row.appendChild(nameEl);
 
-      // Double-click to rename
+      // Double-click to rename (manual detection because re-renders between clicks
+      // would otherwise break the native dblclick event)
+      nameEl.addEventListener('click', (e) => {
+        const now = Date.now();
+        if (
+          this.lastClickedCurveIndex === i &&
+          now - this.lastClickTime < this.DOUBLE_CLICK_MS
+        ) {
+          e.stopPropagation();
+          e.preventDefault();
+          this.lastClickedCurveIndex = null;
+          this.lastClickTime = 0;
+          // Defer so the row's click handler can finish first without re-rendering away the input
+          setTimeout(() => {
+            const currentNameEl = this.listEl.children[i]?.querySelector('.curve-name') as HTMLSpanElement | null;
+            if (currentNameEl) this.startInlineRename(i, currentNameEl);
+          }, 0);
+        } else {
+          this.lastClickedCurveIndex = i;
+          this.lastClickTime = now;
+        }
+      });
+
+      // Native dblclick as a fallback (works when re-render doesn't happen)
       nameEl.addEventListener('dblclick', (e) => {
         e.stopPropagation();
         this.startInlineRename(i, nameEl);
@@ -137,8 +203,13 @@ export class CurveList {
       });
       row.appendChild(lockBtn);
 
-      // Click to select
+      // Click to select (and reset active component to "all")
       row.addEventListener('click', (e) => {
+        // Capture prior state so we can skip re-rendering when nothing changed
+        const wasSoleSelected =
+          state.selectedCurves.size === 1 && state.selectedCurves.has(i);
+        const priorActiveComp = state.activeComponent;
+
         if (e.ctrlKey || e.metaKey) {
           if (state.selectedCurves.has(i)) {
             state.selectedCurves.delete(i);
@@ -149,7 +220,17 @@ export class CurveList {
           state.selectedCurves.clear();
           state.selectedCurves.add(i);
         }
-        state.markDirty();
+        state.activeComponent = null;
+
+        // Only mark dirty if something actually changed; otherwise repeated clicks
+        // would destroy the DOM node and break our double-click detection.
+        const nothingChanged =
+          !(e.ctrlKey || e.metaKey) &&
+          wasSoleSelected &&
+          priorActiveComp === null;
+        if (!nothingChanged) {
+          state.markDirty();
+        }
       });
 
       // Right-click context menu
@@ -174,10 +255,12 @@ export class CurveList {
 
         for (let ci = 0; ci < compCount; ci++) {
           const compVisible = state.isComponentVisible(i, ci);
+          const isActiveComp = state.activeComponent === ci;
           const compRow = document.createElement('div');
-          compRow.className = 'curve-list-item curve-component-item';
+          compRow.className = `curve-list-item curve-component-item ${isActiveComp ? 'selected' : ''}`;
           compRow.setAttribute('role', 'listitem');
           compRow.setAttribute('aria-label', `Component ${compNames[ci]} of ${curve.name}`);
+          compRow.setAttribute('aria-selected', String(isActiveComp));
 
           const indent = document.createElement('span');
           indent.className = 'component-indent';
@@ -204,7 +287,51 @@ export class CurveList {
           });
           compRow.appendChild(compVisBtn);
 
+          // Click to select this component as active drag target
+          compRow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.activeComponent = isActiveComp ? null : ci;
+            state.markDirty();
+          });
+
           listEl.appendChild(compRow);
+        }
+      }
+
+      // State label sub-items for int state curves
+      if (curve.type === 'int' && curve.states && isSelected) {
+        const stateCount = curve.states.count;
+        const stateLabels = curve.states.labels || [];
+
+        for (let si = 0; si < stateCount; si++) {
+          const label = stateLabels[si] || `State ${si}`;
+          const stateRow = document.createElement('div');
+          stateRow.className = 'curve-list-item curve-component-item';
+          stateRow.setAttribute('role', 'listitem');
+          stateRow.setAttribute('aria-label', `State ${si}: ${label}`);
+
+          const indent = document.createElement('span');
+          indent.className = 'component-indent';
+          indent.textContent = '\u2514';
+          stateRow.appendChild(indent);
+
+          const stateSwatch = document.createElement('span');
+          stateSwatch.className = 'curve-swatch';
+          stateSwatch.style.backgroundColor = STATE_COLORS[si % STATE_COLORS.length];
+          stateRow.appendChild(stateSwatch);
+
+          const stateLabelEl = document.createElement('span');
+          stateLabelEl.className = 'curve-name';
+          stateLabelEl.textContent = `${si}: ${label}`;
+          stateRow.appendChild(stateLabelEl);
+
+          // Double-click to rename label inline
+          stateLabelEl.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            this.startStateLabelRename(i, si, stateLabelEl, label);
+          });
+
+          listEl.appendChild(stateRow);
         }
       }
     }
@@ -251,6 +378,48 @@ export class CurveList {
     input.addEventListener('blur', commit);
   }
 
+  private startStateLabelRename(
+    curveIndex: number,
+    stateIndex: number,
+    labelEl: HTMLSpanElement,
+    currentLabel: string
+  ): void {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'curve-rename-input';
+    input.value = currentLabel;
+    input.setAttribute('aria-label', `Rename state ${stateIndex}`);
+
+    labelEl.textContent = '';
+    labelEl.appendChild(input);
+    input.focus();
+    input.select();
+
+    const commit = () => {
+      const newLabel = input.value.trim();
+      if (newLabel && newLabel !== currentLabel) {
+        const curve = this.state.doc.curves[curveIndex];
+        const labels = [...(curve.states?.labels || [])];
+        while (labels.length <= stateIndex) labels.push(`State ${labels.length}`);
+        labels[stateIndex] = newLabel;
+        this.postEdit([{
+          op: 'replace',
+          path: `/curves/${curveIndex}/states/labels`,
+          value: labels,
+        }]);
+      } else {
+        labelEl.textContent = `${stateIndex}: ${currentLabel}`;
+      }
+    };
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { commit(); input.blur(); }
+      if (e.key === 'Escape') { labelEl.textContent = `${stateIndex}: ${currentLabel}`; input.blur(); }
+      e.stopPropagation();
+    });
+    input.addEventListener('blur', commit);
+  }
+
   private showContextMenu(clientX: number, clientY: number, curveIndex: number): void {
     const curve = this.state.doc.curves[curveIndex];
 
@@ -279,6 +448,10 @@ export class CurveList {
         { label: 'Vec4', action: () => this.changeCurveType(curveIndex, 'vec4') },
         { label: 'Color', action: () => this.changeCurveType(curveIndex, 'color') },
       ]},
+      ...(curve.type === 'int' ? [
+        { type: 'separator' as const },
+        { label: 'Edit States...', action: () => this.openStatesModal(curveIndex) },
+      ] : []),
     ];
 
     ContextMenu.show(clientX, clientY, items);
@@ -314,6 +487,15 @@ export class CurveList {
       path: '/curves',
       value: curves,
     }]);
+  }
+
+  private openStatesModal(curveIndex: number): void {
+    const curve = this.state.doc.curves[curveIndex];
+    const count = curve.states?.count || 2;
+    const labels = curve.states?.labels || [];
+
+    const modal = new StatesModal(curveIndex, count, labels, this.postEdit);
+    modal.show();
   }
 }
 

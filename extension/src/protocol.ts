@@ -17,6 +17,11 @@ export interface KeyFrame {
   tangentMode?: TangentMode;
   tangentIn?: TangentHandle | TangentHandle[];
   tangentOut?: TangentHandle | TangentHandle[];
+  /** Optional per-component interpolation override (vec/color curves only).
+   *  If set for component c, overrides the default `interp` for that component. */
+  componentInterp?: InterpolationMode[];
+  /** Optional per-component tangent mode override (vec/color curves only). */
+  componentTangentMode?: TangentMode[];
 }
 
 export interface StatesDefinition {
@@ -103,10 +108,15 @@ export interface UiReadyMessage {
   type: 'ui:ready';
 }
 
+export interface CommandViewJsonMessage {
+  type: 'command:viewJson';
+}
+
 export type WebviewToHostMessage =
   | EditBatchMessage
   | CommandNewCurveMessage
   | CommandDeleteCurveMessage
+  | CommandViewJsonMessage
   | UiReadyMessage;
 
 // ── Settings ──

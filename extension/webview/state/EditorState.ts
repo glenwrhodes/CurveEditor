@@ -21,6 +21,8 @@ export interface DragState {
   originalKeys?: KeyFrame[];
   /** Index of the tangent component being dragged (for vec/color) */
   tangentComponent?: number;
+  /** Index of the key component being dragged (for vec/color vertical moves) */
+  dragComponent?: number;
 }
 
 const CURVE_PALETTE = [
@@ -49,7 +51,7 @@ export class EditorState {
     currentScreenY: 0,
     shiftHeld: false,
   };
-  snapEnabled = false;
+  snapEnabled = true;
   tangentDisplayEnabled = true;
   hoveredKey: SelectedKey | null = null;
   hoveredTangent: { curveIndex: number; keyIndex: number; which: 'in' | 'out'; component?: number } | null = null;
@@ -64,6 +66,9 @@ export class EditorState {
   curveColorOverride: Map<number, string> = new Map();
   /** Per-curve-component visibility: key = "curveIdx:compIdx", value = visible */
   componentVisibility: Map<string, boolean> = new Map();
+  /** Active component for vec/color curves — controls which sub-curve is dragged.
+   *  null means all components move together. */
+  activeComponent: number | null = null;
 
   settings: EditorSettings = {
     snapTimeInterval: 0.1,

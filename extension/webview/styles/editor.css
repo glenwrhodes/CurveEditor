@@ -111,6 +111,23 @@ html, body {
   min-width: 70px;
 }
 
+/* Style the dropdown list items — without these, the browser/OS uses its own
+   default colors which often renders as near-invisible gray-on-white. */
+select option,
+.toolbar-select option,
+.inspector-select option {
+  background: var(--dropdown-bg);
+  color: var(--dropdown-fg);
+}
+
+select option:checked,
+select option:hover,
+.toolbar-select option:checked,
+.inspector-select option:checked {
+  background: var(--list-active);
+  color: var(--list-active-fg);
+}
+
 /* ── Dropdown ── */
 .dropdown-wrapper {
   position: relative;
@@ -159,13 +176,40 @@ html, body {
 }
 
 .curve-list-header {
-  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  opacity: 0.6;
   border-bottom: 1px solid var(--panel-border);
+}
+
+.curve-list-header > span {
+  opacity: 0.6;
+}
+
+.curve-list-toggle-all {
+  background: none;
+  border: none;
+  color: var(--curve-text);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  opacity: 0.4;
+  line-height: 1;
+  border-radius: 3px;
+}
+
+.curve-list-toggle-all:hover {
+  opacity: 0.9;
+  background: var(--list-hover);
+}
+
+.curve-list-toggle-all.active {
+  opacity: 0.85;
 }
 
 .curve-list-items {
@@ -320,6 +364,18 @@ html, body {
 
 .inspector-select:disabled {
   opacity: 0.4;
+}
+
+.inspector-scope-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.55;
+  padding: 2px 6px;
+  border: 1px solid var(--panel-border);
+  border-radius: 3px;
+  background: var(--input-bg);
+  white-space: nowrap;
 }
 
 .inspector-tangent-section {
@@ -500,4 +556,125 @@ html, body {
   border-radius: 3px;
   font-size: 12px;
   font-family: monospace;
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  padding: 16px 20px;
+  min-width: 280px;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: var(--curve-text);
+}
+
+.modal-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.modal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.modal-label {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.modal-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 10px 0 6px;
+  opacity: 0.7;
+}
+
+.modal-input {
+  padding: 3px 8px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--input-border);
+  border-radius: 3px;
+  font-size: 12px;
+  width: 60px;
+}
+
+.modal-input:focus {
+  outline: 1px solid var(--key-selected);
+}
+
+.modal-labels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.modal-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-label-index {
+  font-size: 11px;
+  opacity: 0.5;
+  min-width: 20px;
+  text-align: right;
+}
+
+.modal-label-input {
+  flex: 1;
+  width: auto;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.modal-btn {
+  padding: 4px 14px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.modal-btn-cancel {
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+}
+
+.modal-btn-cancel:hover {
+  background: var(--btn-hover);
+}
+
+.modal-btn-save {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+}
+
+.modal-btn-save:hover {
+  opacity: 0.9;
 }

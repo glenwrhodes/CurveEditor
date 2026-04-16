@@ -11,7 +11,8 @@ import {
   frameRegion,
 } from '../math/transforms';
 import { getEffectiveTangents } from '../math/tangents';
-import { KeyFrame, TangentHandle, JsonPatchOp } from '../../src/protocol';
+import { applyInterpToKey, applyTangentModeToKey, getComponentCount } from '../math/effective';
+import { KeyFrame, TangentHandle, JsonPatchOp, CurveDefinition, InterpolationMode, TangentMode } from '../../src/protocol';
 import { ContextMenu } from '../panels/ContextMenu';
 
 type PostEditFn = (ops: JsonPatchOp[]) => void;
@@ -105,6 +106,12 @@ export class InteractionHandler {
         state.selectKey(keyHit.curveIndex, keyHit.keyIndex, false);
       }
 
+      // Also select the curve in the left panel so the user sees what they're editing
+      if (!e.ctrlKey && !e.metaKey) {
+        state.selectedCurves.clear();
+      }
+      state.selectedCurves.add(keyHit.curveIndex);
+
       // Snapshot for drag
       const originals = state.selectedKeys.map((sk) =>
         JSON.parse(JSON.stringify(state.doc.curves[sk.curveIndex].keys[sk.keyIndex]))
@@ -119,6 +126,7 @@ export class InteractionHandler {
         shiftHeld: e.shiftKey,
         constrainAxis: null,
         originalKeys: originals,
+        dragComponent: keyHit.component ?? state.activeComponent ?? undefined,
       };
       state.markDirty();
       return;
@@ -201,7 +209,6 @@ export class InteractionHandler {
     const dx = pos.x - drag.startScreenX;
     const dy = pos.y - drag.startScreenY;
 
-    // Determine constraint axis
     if (drag.shiftHeld && !drag.constrainAxis) {
       if (Math.abs(dx) > CONSTRAIN_THRESHOLD || Math.abs(dy) > CONSTRAIN_THRESHOLD) {
         drag.constrainAxis = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
@@ -218,6 +225,7 @@ export class InteractionHandler {
       const orig = drag.originalKeys[i];
       if (!orig) continue;
 
+      const curve = state.doc.curves[sk.curveIndex];
       const newKey: KeyFrame = JSON.parse(JSON.stringify(orig));
 
       if (drag.constrainAxis !== 'vertical') {
@@ -228,13 +236,33 @@ export class InteractionHandler {
 
       if (drag.constrainAxis !== 'horizontal') {
         if (typeof newKey.value === 'number') {
-          const raw = (orig.value as number) + dValue;
-          newKey.value = state.snapEnabled ? state.snapVal(raw) : raw;
+          let raw = (orig.value as number) + dValue;
+
+          // State curves: snap to valid integer states
+          if (curve.type === 'int' && curve.states) {
+            raw = Math.round(raw);
+            raw = Math.max(0, Math.min(curve.states.count - 1, raw));
+          } else if (state.snapEnabled) {
+            raw = state.snapVal(raw);
+          }
+
+          newKey.value = raw;
         } else {
-          newKey.value = (orig.value as number[]).map((v) => {
-            const raw = v + dValue;
-            return state.snapEnabled ? state.snapVal(raw) : raw;
-          });
+          // Vec/color: only move the clicked component, leave others unchanged
+          const arr = [...(orig.value as number[])];
+          const comp = drag.dragComponent;
+
+          if (comp !== undefined) {
+            const raw = arr[comp] + dValue;
+            arr[comp] = state.snapEnabled ? state.snapVal(raw) : raw;
+          } else {
+            for (let c = 0; c < arr.length; c++) {
+              const raw = arr[c] + dValue;
+              arr[c] = state.snapEnabled ? state.snapVal(raw) : raw;
+            }
+          }
+
+          newKey.value = arr;
         }
       }
 
@@ -249,7 +277,8 @@ export class InteractionHandler {
     if (state.selectedKeys.length === 0) return;
 
     const sk = state.selectedKeys[0];
-    const key = state.doc.curves[sk.curveIndex].keys[sk.keyIndex];
+    const curve = state.doc.curves[sk.curveIndex];
+    const key = curve.keys[sk.keyIndex];
     const which = state.drag.type === 'tangentIn' ? 'in' : 'out';
     const comp = state.drag.tangentComponent;
 
@@ -265,18 +294,59 @@ export class InteractionHandler {
     newKey.tangentMode = newKey.tangentMode === 'auto' ? 'user' : newKey.tangentMode;
 
     const newHandle: TangentHandle = { dx, dy };
+    const isVec = typeof key.value !== 'number';
 
-    if (comp !== undefined && Array.isArray(newKey.tangentIn)) {
-      // Vec/color: update specific component
-      if (which === 'in') {
-        (newKey.tangentIn as TangentHandle[])[comp] = newHandle;
-      } else {
-        (newKey.tangentOut as TangentHandle[])[comp] = newHandle;
+    if (isVec && comp !== undefined) {
+      // Materialize per-component tangent arrays so each component has its own handle.
+      // Fill empty slots with current effective tangents (auto or previously set).
+      const componentCount = (key.value as number[]).length;
+      const allKeys = curve.keys.map((_, idx) => state.getKey(sk.curveIndex, idx));
+
+      const materializedIn: TangentHandle[] = [];
+      const materializedOut: TangentHandle[] = [];
+
+      for (let c = 0; c < componentCount; c++) {
+        const effective = getEffectiveTangents(allKeys, sk.keyIndex, c);
+        materializedIn.push({ dx: effective.tangentIn.dx, dy: effective.tangentIn.dy });
+        materializedOut.push({ dx: effective.tangentOut.dx, dy: effective.tangentOut.dy });
       }
+
+      // Preserve any user-set component tangents that already exist
+      if (Array.isArray(newKey.tangentIn)) {
+        const arr = newKey.tangentIn as TangentHandle[];
+        for (let c = 0; c < componentCount; c++) {
+          if (arr[c]) materializedIn[c] = { ...arr[c] };
+        }
+      }
+      if (Array.isArray(newKey.tangentOut)) {
+        const arr = newKey.tangentOut as TangentHandle[];
+        for (let c = 0; c < componentCount; c++) {
+          if (arr[c]) materializedOut[c] = { ...arr[c] };
+        }
+      }
+
+      // Apply the drag to just this component
+      if (which === 'in') {
+        materializedIn[comp] = newHandle;
+        if (newKey.tangentMode === 'aligned') {
+          const outDx = Math.abs(materializedOut[comp].dx);
+          const slope = dx !== 0 ? dy / dx : 0;
+          materializedOut[comp].dy = -slope * outDx;
+        }
+      } else {
+        materializedOut[comp] = newHandle;
+        if (newKey.tangentMode === 'aligned') {
+          const inDx = Math.abs(materializedIn[comp].dx);
+          const slope = dx !== 0 ? dy / dx : 0;
+          materializedIn[comp].dy = -slope * inDx;
+        }
+      }
+
+      newKey.tangentIn = materializedIn;
+      newKey.tangentOut = materializedOut;
     } else {
       if (which === 'in') {
         newKey.tangentIn = newHandle;
-        // Mirror for aligned mode
         if (newKey.tangentMode === 'aligned' && newKey.tangentOut) {
           const outDx = Math.abs((newKey.tangentOut as TangentHandle).dx);
           const slope = dx !== 0 ? dy / dx : 0;
@@ -304,6 +374,7 @@ export class InteractionHandler {
     const y2 = Math.max(state.drag.startScreenY, state.drag.currentScreenY);
 
     state.selectedKeys = [];
+    const curvesWithHits = new Set<number>();
 
     for (const { curve, index: ci } of state.getVisibleCurves()) {
       for (let ki = 0; ki < curve.keys.length; ki++) {
@@ -316,10 +387,16 @@ export class InteractionHandler {
 
           if (sx >= x1 && sx <= x2 && sy >= y1 && sy <= y2) {
             state.selectedKeys.push({ curveIndex: ci, keyIndex: ki });
+            curvesWithHits.add(ci);
             break;
           }
         }
       }
+    }
+
+    // Sync curve list selection to reflect which curves had keys captured
+    if (curvesWithHits.size > 0) {
+      state.selectedCurves = curvesWithHits;
     }
   }
 
@@ -369,11 +446,9 @@ export class InteractionHandler {
     const pos = this.getCanvasPos(e);
     const { state } = this;
 
-    // Check if double-clicking an existing key first
     const keyHit = hitTestKeys(state, pos.x, pos.y, 1);
     if (keyHit) return;
 
-    // Add a new key at this position on the selected curve
     const curveIdx = state.getSelectedCurveIndex();
     if (curveIdx === null) return;
 
@@ -381,25 +456,55 @@ export class InteractionHandler {
     if (!curve) return;
 
     const time = screenToCurveX(state.viewport, pos.x);
-    let value: number | number[] = screenToCurveY(state.viewport, pos.y, state.canvasHeight);
+    const clickedY = screenToCurveY(state.viewport, pos.y, state.canvasHeight);
+    let value: number | number[];
 
-    if (state.snapEnabled) {
-      value = state.snapVal(value as number);
-    }
+    if (curve.type === 'int' && curve.states) {
+      // State curve: snap to nearest valid state integer
+      value = Math.round(clickedY);
+      value = Math.max(0, Math.min(curve.states.count - 1, value));
+    } else if (curve.type === 'int') {
+      value = Math.round(state.snapEnabled ? state.snapVal(clickedY) : clickedY);
+    } else if (curve.type === 'float') {
+      value = state.snapEnabled ? state.snapVal(clickedY) : clickedY;
+    } else {
+      // Vec/color: evaluate existing curve at this time to get current component values,
+      // then set the clicked component to the clicked Y value
+      const compCount = getComponentCount(curve.type);
+      const arr = new Array(compCount).fill(0);
 
-    if (curve.type !== 'float' && curve.type !== 'int') {
-      const componentCount = getComponentCount(curve.type);
-      value = new Array(componentCount).fill(value);
+      // Interpolate current values from neighboring keys
+      for (let c = 0; c < compCount; c++) {
+        arr[c] = this.interpolateComponentAt(curve, time, c);
+      }
+
+      // Find which component is closest to the clicked Y and set that one
+      let closestComp = 0;
+      let closestDist = Infinity;
+      for (let c = 0; c < compCount; c++) {
+        const dist = Math.abs(arr[c] - clickedY);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestComp = c;
+        }
+      }
+      arr[closestComp] = state.snapEnabled ? state.snapVal(clickedY) : clickedY;
+
+      value = arr;
     }
 
     const newKey: KeyFrame = {
       time: state.snapEnabled ? state.snapTime(time) : time,
       value,
-      interp: state.settings.defaultInterpolation,
+      interp: curve.type === 'int' ? 'constant' : state.settings.defaultInterpolation,
       tangentMode: state.settings.defaultTangentMode,
     };
 
-    // Find insert position to keep keys sorted by time
+    // State curves must always use constant interpolation
+    if (curve.type === 'int' && curve.states) {
+      newKey.interp = 'constant';
+    }
+
     const insertIdx = curve.keys.findIndex((k) => k.time > newKey.time);
     const actualIdx = insertIdx === -1 ? curve.keys.length : insertIdx;
 
@@ -410,6 +515,29 @@ export class InteractionHandler {
         value: newKey,
       },
     ]);
+  }
+
+  /** Simple linear interpolation of a component value at a given time */
+  private interpolateComponentAt(curve: CurveDefinition, time: number, component: number): number {
+    const keys = curve.keys;
+    if (keys.length === 0) return 0;
+
+    const getVal = (k: KeyFrame) => {
+      const v = k.value;
+      if (typeof v === 'number') return v;
+      return (v as number[])[component] ?? 0;
+    };
+
+    if (time <= keys[0].time) return getVal(keys[0]);
+    if (time >= keys[keys.length - 1].time) return getVal(keys[keys.length - 1]);
+
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (time >= keys[i].time && time <= keys[i + 1].time) {
+        const t = (time - keys[i].time) / (keys[i + 1].time - keys[i].time);
+        return getVal(keys[i]) + (getVal(keys[i + 1]) - getVal(keys[i])) * t;
+      }
+    }
+    return getVal(keys[keys.length - 1]);
   }
 
   // ── Wheel ──
@@ -522,11 +650,22 @@ export class InteractionHandler {
   private setSelectedTangentMode(mode: string): void {
     const { state } = this;
     if (state.selectedKeys.length === 0) return;
-    const ops: JsonPatchOp[] = state.selectedKeys.map((sk) => ({
-      op: 'replace' as const,
-      path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentMode`,
-      value: mode,
-    }));
+
+    const ops: JsonPatchOp[] = state.selectedKeys.map((sk) => {
+      const curve = state.doc.curves[sk.curveIndex];
+      const key = curve.keys[sk.keyIndex];
+      const newKey = applyTangentModeToKey(
+        key,
+        mode as TangentMode,
+        getComponentCount(curve.type),
+        state.activeComponent
+      );
+      return {
+        op: 'replace' as const,
+        path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}`,
+        value: newKey,
+      };
+    });
     this.postEdit(ops);
   }
 
@@ -702,11 +841,21 @@ export class InteractionHandler {
     const { state } = this;
     if (state.selectedKeys.length === 0) return;
 
-    const ops: JsonPatchOp[] = state.selectedKeys.map((sk) => ({
-      op: 'replace' as const,
-      path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/interp`,
-      value: interp,
-    }));
+    const ops: JsonPatchOp[] = state.selectedKeys.map((sk) => {
+      const curve = state.doc.curves[sk.curveIndex];
+      const key = curve.keys[sk.keyIndex];
+      const newKey = applyInterpToKey(
+        key,
+        interp as InterpolationMode,
+        getComponentCount(curve.type),
+        state.activeComponent
+      );
+      return {
+        op: 'replace' as const,
+        path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}`,
+        value: newKey,
+      };
+    });
 
     this.postEdit(ops);
   }
@@ -762,11 +911,3 @@ export class InteractionHandler {
   }
 }
 
-function getComponentCount(type: string): number {
-  switch (type) {
-    case 'vec2': return 2;
-    case 'vec3': return 3;
-    case 'vec4': case 'color': return 4;
-    default: return 1;
-  }
-}

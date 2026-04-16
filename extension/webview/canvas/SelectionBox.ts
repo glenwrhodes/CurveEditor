@@ -20,12 +20,9 @@ export function renderSelectionBox(
   const styles = getComputedStyle(document.documentElement);
   const selectColor = styles.getPropertyValue('--key-selected').trim() || '#007acc';
 
-  ctx.fillStyle = selectColor + '22';
   ctx.strokeStyle = selectColor;
   ctx.lineWidth = 1 * dpr;
   ctx.setLineDash([4 * dpr, 4 * dpr]);
-
-  ctx.fillRect(x1, y1, w, h);
   ctx.strokeRect(x1, y1, w, h);
 
   ctx.restore();

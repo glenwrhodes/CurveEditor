@@ -66,6 +66,7 @@ export function computeAutoTangents(
 
 /**
  * Get the effective tangent handles for a key, computing auto tangents if needed.
+ * Respects per-component tangent mode overrides.
  */
 export function getEffectiveTangents(
   keys: KeyFrame[],
@@ -74,7 +75,10 @@ export function getEffectiveTangents(
 ): { tangentIn: TangentHandle; tangentOut: TangentHandle } {
   const key = keys[i];
 
-  if (key.tangentMode === 'auto' || (!key.tangentIn && !key.tangentOut)) {
+  // Resolve effective tangent mode (per-component override if present)
+  const mode = getEffectiveTangentModeForKey(key, component);
+
+  if (mode === 'auto' || (!key.tangentIn && !key.tangentOut)) {
     return computeAutoTangents(keys, i, component);
   }
 
@@ -93,7 +97,7 @@ export function getEffectiveTangents(
     tangentOut = (key.tangentOut as TangentHandle) || { dx: 0.1, dy: 0 };
   }
 
-  if (key.tangentMode === 'aligned') {
+  if (mode === 'aligned') {
     const slope = tangentOut.dx !== 0 ? tangentOut.dy / tangentOut.dx : 0;
     tangentIn = {
       dx: -Math.abs(tangentIn.dx),
@@ -102,6 +106,13 @@ export function getEffectiveTangents(
   }
 
   return { tangentIn, tangentOut };
+}
+
+function getEffectiveTangentModeForKey(key: KeyFrame, component?: number): string {
+  if (component !== undefined && key.componentTangentMode && key.componentTangentMode[component]) {
+    return key.componentTangentMode[component];
+  }
+  return key.tangentMode || 'auto';
 }
 
 function getScalarValue(value: number | number[], component?: number): number {

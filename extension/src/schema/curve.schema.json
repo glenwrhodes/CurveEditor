@@ -119,6 +119,42 @@
       "minItems": 4,
       "maxItems": 4
     },
+    "InterpArray2": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/InterpolationMode" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "InterpArray3": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/InterpolationMode" },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "InterpArray4": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/InterpolationMode" },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "TangentModeArray2": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TangentMode" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "TangentModeArray3": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TangentMode" },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "TangentModeArray4": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TangentMode" },
+      "minItems": 4,
+      "maxItems": 4
+    },
     "KeyFrameVec2": {
       "type": "object",
       "required": ["time", "value", "interp"],
@@ -133,7 +169,9 @@
         "interp": { "$ref": "#/definitions/InterpolationMode" },
         "tangentMode": { "$ref": "#/definitions/TangentMode" },
         "tangentIn": { "$ref": "#/definitions/TangentHandleArray2" },
-        "tangentOut": { "$ref": "#/definitions/TangentHandleArray2" }
+        "tangentOut": { "$ref": "#/definitions/TangentHandleArray2" },
+        "componentInterp": { "$ref": "#/definitions/InterpArray2" },
+        "componentTangentMode": { "$ref": "#/definitions/TangentModeArray2" }
       },
       "additionalProperties": false
     },
@@ -151,7 +189,9 @@
         "interp": { "$ref": "#/definitions/InterpolationMode" },
         "tangentMode": { "$ref": "#/definitions/TangentMode" },
         "tangentIn": { "$ref": "#/definitions/TangentHandleArray3" },
-        "tangentOut": { "$ref": "#/definitions/TangentHandleArray3" }
+        "tangentOut": { "$ref": "#/definitions/TangentHandleArray3" },
+        "componentInterp": { "$ref": "#/definitions/InterpArray3" },
+        "componentTangentMode": { "$ref": "#/definitions/TangentModeArray3" }
       },
       "additionalProperties": false
     },
@@ -169,7 +209,9 @@
         "interp": { "$ref": "#/definitions/InterpolationMode" },
         "tangentMode": { "$ref": "#/definitions/TangentMode" },
         "tangentIn": { "$ref": "#/definitions/TangentHandleArray4" },
-        "tangentOut": { "$ref": "#/definitions/TangentHandleArray4" }
+        "tangentOut": { "$ref": "#/definitions/TangentHandleArray4" },
+        "componentInterp": { "$ref": "#/definitions/InterpArray4" },
+        "componentTangentMode": { "$ref": "#/definitions/TangentModeArray4" }
       },
       "additionalProperties": false
     },
@@ -187,7 +229,9 @@
         "interp": { "$ref": "#/definitions/InterpolationMode" },
         "tangentMode": { "$ref": "#/definitions/TangentMode" },
         "tangentIn": { "$ref": "#/definitions/TangentHandleArray4" },
-        "tangentOut": { "$ref": "#/definitions/TangentHandleArray4" }
+        "tangentOut": { "$ref": "#/definitions/TangentHandleArray4" },
+        "componentInterp": { "$ref": "#/definitions/InterpArray4" },
+        "componentTangentMode": { "$ref": "#/definitions/TangentModeArray4" }
       },
       "additionalProperties": false
     },

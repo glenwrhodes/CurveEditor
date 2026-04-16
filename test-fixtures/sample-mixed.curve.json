@@ -7,38 +7,226 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": 0.0, "interp": "bezier", "tangentMode": "auto" },
-        { "time": 0.5, "value": 0.8, "interp": "bezier", "tangentMode": "auto" },
-        { "time": 1.0, "value": 1.0, "interp": "bezier", "tangentMode": "auto" }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 0.5,
+          "value": 0.8,
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentIn": {
+            "dx": -0.25003145899972157,
+            "dy": -0.23773719925098824
+          },
+          "tangentOut": {
+            "dx": 0.1742,
+            "dy": 0.16265269684148187
+          }
+        },
+        {
+          "time": 1,
+          "value": 1,
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentIn": {
+            "dx": -0.1938141438874793,
+            "dy": -0.03301876374130219
+          }
+        }
+      ]
+    },
+    {
+      "name": "curve4",
+      "type": "vec3",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        {
+          "time": 0.8,
+          "value": [
+            1.3,
+            0,
+            0
+          ],
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1.8,
+          "value": [
+            1.3,
+            0,
+            0
+          ],
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 7.300000000000001,
+          "value": [
+            8.9,
+            4.6000000000000005,
+            0
+          ],
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentIn": {
+            "dx": -1.403482148253758,
+            "dy": -0.6817148993638318
+          }
+        }
       ]
     },
     {
       "name": "difficulty",
       "type": "int",
-      "range": { "min": 1, "max": 10 },
+      "range": {
+        "min": 1,
+        "max": 10
+      },
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": 1, "interp": "linear" },
-        { "time": 5.0, "value": 5, "interp": "linear" },
-        { "time": 10.0, "value": 10, "interp": "constant" }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "linear"
+        },
+        {
+          "time": 5,
+          "value": 5,
+          "interp": "linear"
+        },
+        {
+          "time": 10,
+          "value": 10,
+          "interp": "constant"
+        }
       ]
     },
     {
       "name": "trafficLight",
       "type": "int",
       "states": {
-        "count": 3,
-        "labels": ["Red", "Yellow", "Green"]
+        "count": 4,
+        "labels": [
+          "Red",
+          "Yellow",
+          "Green",
+          "Off"
+        ]
       },
-      "range": { "min": 0, "max": 2 },
+      "range": {
+        "min": 0,
+        "max": 2
+      },
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": 0, "interp": "constant" },
-        { "time": 5.0, "value": 2, "interp": "constant" },
-        { "time": 8.0, "value": 1, "interp": "constant" },
-        { "time": 10.0, "value": 0, "interp": "constant" }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "constant"
+        },
+        {
+          "time": 5,
+          "value": 2,
+          "interp": "constant"
+        },
+        {
+          "time": 8,
+          "value": 1,
+          "interp": "constant"
+        },
+        {
+          "time": 9.1,
+          "value": 3,
+          "interp": "constant",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 10,
+          "value": 0,
+          "interp": "constant"
+        }
+      ]
+    },
+    {
+      "name": "Sunrise",
+      "type": "color",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        {
+          "time": 0,
+          "value": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1,
+          "value": [
+            0.1411764705882353,
+            0.047058823529411764,
+            0,
+            1
+          ],
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 2,
+          "value": [
+            0.8588235294117647,
+            0.20392156862745098,
+            0.0392156862745098,
+            1
+          ],
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 3.4000000000000004,
+          "value": [
+            0.9568627450980393,
+            0.5,
+            0.30000000000000004,
+            1
+          ],
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 5,
+          "value": [
+            0.9607843137254902,
+            0.8352941176470589,
+            0.7215686274509804,
+            1
+          ],
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 5.7,
+          "value": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "interp": "bezier",
+          "tangentMode": "auto"
+        }
       ]
     }
   ]

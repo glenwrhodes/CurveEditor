@@ -8,8 +8,8 @@
       "postInfinity": "constant",
       "keys": [
         {
-          "time": 0.0,
-          "value": 0.0,
+          "time": 0,
+          "value": 0,
           "interp": "bezier",
           "tangentMode": "auto"
         },
@@ -20,10 +20,14 @@
           "tangentMode": "auto"
         },
         {
-          "time": 1.0,
-          "value": 1.0,
+          "time": 1,
+          "value": 0.655,
           "interp": "bezier",
-          "tangentMode": "auto"
+          "tangentMode": "user",
+          "tangentIn": {
+            "dx": -0.19999999999999996,
+            "dy": 0.15500000000000003
+          }
         }
       ]
     },
@@ -31,15 +35,15 @@
       "name": "scaleX",
       "type": "float",
       "range": {
-        "min": 0.0,
-        "max": 2.0
+        "min": 0,
+        "max": 2
       },
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
         {
-          "time": 0.0,
-          "value": 1.0,
+          "time": 0,
+          "value": 1,
           "interp": "bezier",
           "tangentMode": "auto"
         },
@@ -56,8 +60,8 @@
           "tangentMode": "auto"
         },
         {
-          "time": 1.0,
-          "value": 1.0,
+          "time": 1,
+          "value": 1,
           "interp": "linear",
           "tangentMode": "auto"
         }

@@ -167,6 +167,24 @@
       "curve": "empty",
       "time": 1.0,
       "expected": null
+    },
+    {
+      "name": "perComponent_mid_linear",
+      "curve": "perComponentInterp",
+      "time": 0.5,
+      "expected_vec": [5.0, 5.0, 0.0]
+    },
+    {
+      "name": "perComponent_quarter_linear",
+      "curve": "perComponentInterp",
+      "time": 0.25,
+      "expected_vec": [2.5, 2.5, 0.0]
+    },
+    {
+      "name": "perComponent_end",
+      "curve": "perComponentInterp",
+      "time": 1.0,
+      "expected_vec": [10.0, 10.0, 10.0]
     }
   ]
 }

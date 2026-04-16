@@ -12,6 +12,10 @@ export interface KeyFrame {
   tangentMode?: string;
   tangentIn?: TangentHandle | TangentHandle[];
   tangentOut?: TangentHandle | TangentHandle[];
+  /** Optional per-component interpolation override (vec/color curves). */
+  componentInterp?: ('bezier' | 'linear' | 'constant')[];
+  /** Optional per-component tangent mode override (vec/color curves). */
+  componentTangentMode?: string[];
 }
 
 export interface StatesDefinition {
@@ -226,11 +230,26 @@ function getEffectiveTangent(
   component?: number
 ): TangentHandle {
   const key = keys[i];
-  if (key.tangentMode === 'auto' || (!key.tangentIn && !key.tangentOut)) {
+  const mode = getEffectiveTangentMode(key, component);
+  if (mode === 'auto' || (!key.tangentIn && !key.tangentOut)) {
     const auto = computeAutoTangents(keys, i, component);
     return which === 'in' ? auto.tangentIn : auto.tangentOut;
   }
   return getTangent(key, which, component);
+}
+
+function getEffectiveInterp(key: KeyFrame, component?: number): 'bezier' | 'linear' | 'constant' {
+  if (component !== undefined && key.componentInterp && key.componentInterp[component]) {
+    return key.componentInterp[component];
+  }
+  return key.interp;
+}
+
+function getEffectiveTangentMode(key: KeyFrame, component?: number): string {
+  if (component !== undefined && key.componentTangentMode && key.componentTangentMode[component]) {
+    return key.componentTangentMode[component];
+  }
+  return key.tangentMode || 'auto';
 }
 
 // ── Bezier Evaluation ──
@@ -296,11 +315,14 @@ function evaluateScalar(keys: KeyFrame[], time: number, component?: number): num
   const v0 = getScalar(k0.value, component);
   const v1 = getScalar(k1.value, component);
 
-  if (k0.interp === 'constant') {
+  // Use effective interp so vec/color components can have independent modes
+  const effInterp = getEffectiveInterp(k0, component);
+
+  if (effInterp === 'constant') {
     return v0;
   }
 
-  if (k0.interp === 'linear') {
+  if (effInterp === 'linear') {
     const t = (time - k0.time) / (k1.time - k0.time);
     return v0 + (v1 - v0) * t;
   }

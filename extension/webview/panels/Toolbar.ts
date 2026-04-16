@@ -1,5 +1,6 @@
 import { EditorState } from '../state/EditorState';
 import { CurveType, InterpolationMode, TangentMode, JsonPatchOp } from '../../src/protocol';
+import { applyInterpToKey, applyTangentModeToKey, getComponentCount } from '../math/effective';
 
 type PostEditFn = (ops: JsonPatchOp[]) => void;
 type PostCommandFn = (msg: any) => void;
@@ -41,6 +42,15 @@ export class Toolbar {
       this.postCommand({ type: 'command:newCurve', curveType: val });
     });
     addGroup.appendChild(addBtn);
+
+    const jsonBtn = document.createElement('button');
+    jsonBtn.className = 'toolbar-btn';
+    jsonBtn.setAttribute('aria-label', 'View raw JSON in text editor');
+    jsonBtn.textContent = '{ } JSON';
+    jsonBtn.addEventListener('click', () => {
+      this.postCommand({ type: 'command:viewJson' });
+    });
+    addGroup.appendChild(jsonBtn);
     this.container.appendChild(addGroup);
 
     // Snap toggle
@@ -231,21 +241,41 @@ export class Toolbar {
 
   private setSelectedInterp(interp: InterpolationMode): void {
     if (this.state.selectedKeys.length === 0) return;
-    const ops: JsonPatchOp[] = this.state.selectedKeys.map((sk) => ({
-      op: 'replace' as const,
-      path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/interp`,
-      value: interp,
-    }));
+    const ops: JsonPatchOp[] = this.state.selectedKeys.map((sk) => {
+      const curve = this.state.doc.curves[sk.curveIndex];
+      const key = curve.keys[sk.keyIndex];
+      const newKey = applyInterpToKey(
+        key,
+        interp,
+        getComponentCount(curve.type),
+        this.state.activeComponent
+      );
+      return {
+        op: 'replace' as const,
+        path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}`,
+        value: newKey,
+      };
+    });
     this.postEdit(ops);
   }
 
   private setSelectedTangentMode(mode: TangentMode): void {
     if (this.state.selectedKeys.length === 0) return;
-    const ops: JsonPatchOp[] = this.state.selectedKeys.map((sk) => ({
-      op: 'replace' as const,
-      path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentMode`,
-      value: mode,
-    }));
+    const ops: JsonPatchOp[] = this.state.selectedKeys.map((sk) => {
+      const curve = this.state.doc.curves[sk.curveIndex];
+      const key = curve.keys[sk.keyIndex];
+      const newKey = applyTangentModeToKey(
+        key,
+        mode,
+        getComponentCount(curve.type),
+        this.state.activeComponent
+      );
+      return {
+        op: 'replace' as const,
+        path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}`,
+        value: newKey,
+      };
+    });
     this.postEdit(ops);
   }
 

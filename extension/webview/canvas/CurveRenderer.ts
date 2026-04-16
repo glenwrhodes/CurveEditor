@@ -3,6 +3,7 @@ import { CurveDefinition, KeyFrame, TangentHandle } from '../../src/protocol';
 import { curveToScreenX, curveToScreenY, screenToCurveX, getVisibleRange } from '../math/transforms';
 import { evaluateBezierSegment, BezierSegment } from '../math/bezier';
 import { getEffectiveTangents } from '../math/tangents';
+import { getEffectiveInterp } from '../math/effective';
 
 export function renderCurves(
   ctx: CanvasRenderingContext2D,
@@ -59,16 +60,12 @@ function renderStateCurve(
 
   if (keys.length === 0) return;
 
-  const bandHeight = canvasHeight / Math.max(stateCount, 1);
-
   ctx.save();
 
   const getKeyAt = (ki: number): KeyFrame => state.getKey(curveIndex, ki);
 
-  // Build time segments from keys (constant interp: left key value holds until next key)
   const segments: { startTime: number; endTime: number; stateIdx: number }[] = [];
 
-  // Before first key
   const firstKey = getKeyAt(0);
   if (range.minX < firstKey.time) {
     segments.push({
@@ -88,49 +85,54 @@ function renderStateCurve(
     });
   }
 
-  // Render colored bands
+  // Bands are positioned using viewport transforms so they pan/zoom with keyframes.
+  // Each state integer value N gets a band from N-0.5 to N+0.5 in curve space.
   for (const seg of segments) {
     const sx0 = curveToScreenX(viewport, seg.startTime) * dpr;
     const sx1 = curveToScreenX(viewport, seg.endTime) * dpr;
 
     if (sx1 < 0 || sx0 > canvasWidth * dpr) continue;
 
-    const bandY = (stateCount - 1 - seg.stateIdx) * bandHeight * dpr;
+    const bandTop = curveToScreenY(viewport, seg.stateIdx + 0.5, canvasHeight) * dpr;
+    const bandBottom = curveToScreenY(viewport, seg.stateIdx - 0.5, canvasHeight) * dpr;
+    const bandH = bandBottom - bandTop;
+
+    if (bandTop > canvasHeight * dpr || bandBottom < 0) continue;
+
     const color = STATE_COLORS[seg.stateIdx % STATE_COLORS.length];
 
     ctx.fillStyle = color + '44';
     ctx.fillRect(
       Math.max(0, sx0),
-      bandY,
+      bandTop,
       Math.min(canvasWidth * dpr, sx1) - Math.max(0, sx0),
-      bandHeight * dpr
+      bandH
     );
 
     ctx.fillStyle = color;
     ctx.fillRect(
       Math.max(0, sx0),
-      bandY + bandHeight * dpr - 3 * dpr,
+      bandBottom - 3 * dpr,
       Math.min(canvasWidth * dpr, sx1) - Math.max(0, sx0),
       3 * dpr
     );
 
-    // Draw state label if there's room
     if (labels && seg.stateIdx < labels.length) {
       const labelWidth = sx1 - sx0;
-      if (labelWidth > 40 * dpr) {
+      if (labelWidth > 40 * dpr && bandH > 14 * dpr) {
         ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--curve-text').trim() || '#ccc';
-        ctx.font = `${11 * dpr}px sans-serif`;
+        ctx.font = `${Math.min(11, bandH / dpr * 0.5) * dpr}px sans-serif`;
         ctx.textBaseline = 'middle';
         ctx.fillText(
           labels[seg.stateIdx],
           Math.max(0, sx0) + 6 * dpr,
-          bandY + bandHeight * dpr / 2
+          bandTop + bandH / 2
         );
       }
     }
   }
 
-  // Draw state labels on left side
+  // Left-side state labels
   if (labels) {
     ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--curve-text').trim() || '#ccc';
     ctx.font = `${10 * dpr}px sans-serif`;
@@ -138,8 +140,8 @@ function renderStateCurve(
     ctx.globalAlpha = 0.5;
     for (let s = 0; s < stateCount; s++) {
       if (s < labels.length) {
-        const bandY = (stateCount - 1 - s) * bandHeight * dpr;
-        ctx.fillText(labels[s], 4 * dpr, bandY + bandHeight * dpr / 2);
+        const centerY = curveToScreenY(viewport, s, canvasHeight) * dpr;
+        ctx.fillText(labels[s], 4 * dpr, centerY);
       }
     }
     ctx.globalAlpha = 1;
@@ -225,14 +227,17 @@ function renderScalarCurve(
     // Skip segments entirely outside viewport
     if (sx1 < 0 || sx0 > canvasWidth * dpr) continue;
 
-    if (k0.interp === 'constant') {
+    // Use effective interp per component so sub-curves can have independent modes
+    const effectiveInterp = getEffectiveInterp(k0, component);
+
+    if (effectiveInterp === 'constant') {
       const sy0 = curveToScreenY(viewport, v0, canvasHeight) * dpr;
       const sy1 = curveToScreenY(viewport, v1, canvasHeight) * dpr;
       if (firstPoint) { ctx.moveTo(sx0, sy0); firstPoint = false; }
       else ctx.lineTo(sx0, sy0);
       ctx.lineTo(sx1, sy0);
       ctx.lineTo(sx1, sy1);
-    } else if (k0.interp === 'linear') {
+    } else if (effectiveInterp === 'linear') {
       const sy0 = curveToScreenY(viewport, v0, canvasHeight) * dpr;
       const sy1 = curveToScreenY(viewport, v1, canvasHeight) * dpr;
       if (firstPoint) { ctx.moveTo(sx0, sy0); firstPoint = false; }
@@ -403,11 +408,14 @@ function evaluateColorAtTime(
     if (time >= k0.time && time <= k1.time) {
       const v0 = k0.value as number[];
       const v1 = k1.value as number[];
-
-      if (k0.interp === 'constant') return [...v0];
-
       const t = (time - k0.time) / (k1.time - k0.time);
-      return v0.map((c, ci) => c + (v1[ci] - c) * t);
+
+      // Per-component interpolation for gradient strip
+      return v0.map((c, ci) => {
+        const compInterp = getEffectiveInterp(k0, ci);
+        if (compInterp === 'constant') return c;
+        return c + (v1[ci] - c) * t;
+      });
     }
   }
 

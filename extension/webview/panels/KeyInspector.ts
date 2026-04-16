@@ -1,5 +1,12 @@
 import { EditorState } from '../state/EditorState';
 import { KeyFrame, JsonPatchOp, InterpolationMode, TangentMode, TangentHandle } from '../../src/protocol';
+import {
+  getEffectiveInterp,
+  getEffectiveTangentMode,
+  applyInterpToKey,
+  applyTangentModeToKey,
+  getComponentCount,
+} from '../math/effective';
 
 type PostEditFn = (ops: JsonPatchOp[]) => void;
 
@@ -34,6 +41,13 @@ export class KeyInspector {
   private update(): void {
     const { state } = this;
     const keys = state.selectedKeys;
+
+    // Preserve focus: if user is editing a field in the inspector, don't rebuild
+    // the DOM (which would blur the field and close any open color picker).
+    const active = document.activeElement;
+    if (active && this.contentEl.contains(active)) {
+      return;
+    }
 
     this.contentEl.innerHTML = '';
 
@@ -119,7 +133,10 @@ export class KeyInspector {
       swatch.className = 'color-swatch-btn';
       swatch.value = hexColor;
       swatch.setAttribute('aria-label', 'Color picker');
-      swatch.addEventListener('input', () => {
+      // Use 'change' instead of 'input' so commits happen when the picker closes.
+      // The 'input' event fires continuously while the user drags, which causes
+      // the inspector to rebuild and the native picker to close prematurely.
+      swatch.addEventListener('change', () => {
         const [r, g, b] = hexToRgb(swatch.value);
         const newValues = [r, g, b, values[3]];
         this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/value`, value: newValues }]);
@@ -145,23 +162,46 @@ export class KeyInspector {
       grid.appendChild(colorGroup);
     }
 
+    // Per-component awareness: if an activeComponent is set on a vec/color curve,
+    // show and edit that component's effective values. Otherwise edit the default.
+    const isVecOrColor = isVec || isColor;
+    const activeComp = isVecOrColor ? state.activeComponent : null;
+
+    if (isVecOrColor) {
+      const scopeLabel = document.createElement('div');
+      scopeLabel.className = 'inspector-scope-label';
+      if (activeComp !== null) {
+        const compNames = isColor ? ['R', 'G', 'B', 'A'] : ['X', 'Y', 'Z', 'W'];
+        scopeLabel.textContent = `Editing: ${compNames[activeComp] || `component ${activeComp}`}`;
+      } else {
+        scopeLabel.textContent = 'Editing: all components';
+      }
+      grid.appendChild(scopeLabel);
+    }
+
+    const effInterp = getEffectiveInterp(key, activeComp ?? undefined);
+    const effTangentMode = getEffectiveTangentMode(key, activeComp ?? undefined);
+    const componentCount = getComponentCount(curve.type);
+
     // Interpolation
-    this.addSelectField(grid, 'Interp', key.interp, [
+    this.addSelectField(grid, 'Interp', effInterp, [
       { label: 'Bezier', value: 'bezier' },
       { label: 'Linear', value: 'linear' },
       { label: 'Constant', value: 'constant' },
     ], (val) => {
-      this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/interp`, value: val }]);
+      const newKey = applyInterpToKey(key, val as InterpolationMode, componentCount, activeComp);
+      this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}`, value: newKey }]);
     });
 
     // Tangent mode
-    this.addSelectField(grid, 'Tangent', key.tangentMode || 'auto', [
+    this.addSelectField(grid, 'Tangent', effTangentMode, [
       { label: 'Auto', value: 'auto' },
       { label: 'User', value: 'user' },
       { label: 'Break', value: 'break' },
       { label: 'Aligned', value: 'aligned' },
     ], (val) => {
-      this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentMode`, value: val }]);
+      const newKey = applyTangentModeToKey(key, val as TangentMode, componentCount, activeComp);
+      this.postEdit([{ op: 'replace', path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}`, value: newKey }]);
     });
 
     this.contentEl.appendChild(grid);
@@ -233,34 +273,59 @@ export class KeyInspector {
     const valField = this.addInputField(grid, 'Value', '(mixed)', () => {});
     valField.disabled = true;
 
-    // Interp: if all same, show it
-    const interps = new Set(keys.map((sk) => state.getKey(sk.curveIndex, sk.keyIndex).interp));
+    // Interp: if all same, show it (uses effective interp based on activeComponent)
+    const activeComp = state.activeComponent;
+    const interps = new Set(
+      keys.map((sk) => getEffectiveInterp(state.getKey(sk.curveIndex, sk.keyIndex), activeComp ?? undefined))
+    );
     this.addSelectField(grid, 'Interp', interps.size === 1 ? interps.values().next().value! : '', [
       { label: 'Bezier', value: 'bezier' },
       { label: 'Linear', value: 'linear' },
       { label: 'Constant', value: 'constant' },
     ], (val) => {
-      const ops = keys.map((sk) => ({
-        op: 'replace' as const,
-        path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/interp`,
-        value: val,
-      }));
+      const ops = keys.map((sk) => {
+        const curve = state.doc.curves[sk.curveIndex];
+        const key = curve.keys[sk.keyIndex];
+        const newKey = applyInterpToKey(
+          key,
+          val as InterpolationMode,
+          getComponentCount(curve.type),
+          activeComp
+        );
+        return {
+          op: 'replace' as const,
+          path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}`,
+          value: newKey,
+        };
+      });
       this.postEdit(ops);
     });
 
     // Tangent mode
-    const tangentModes = new Set(keys.map((sk) => state.getKey(sk.curveIndex, sk.keyIndex).tangentMode || 'auto'));
+    const tangentModes = new Set(
+      keys.map((sk) => getEffectiveTangentMode(state.getKey(sk.curveIndex, sk.keyIndex), activeComp ?? undefined))
+    );
     this.addSelectField(grid, 'Tangent', tangentModes.size === 1 ? tangentModes.values().next().value! : '', [
       { label: 'Auto', value: 'auto' },
       { label: 'User', value: 'user' },
       { label: 'Break', value: 'break' },
       { label: 'Aligned', value: 'aligned' },
     ], (val) => {
-      const ops = keys.map((sk) => ({
-        op: 'replace' as const,
-        path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}/tangentMode`,
-        value: val,
-      }));
+      const ops = keys.map((sk) => {
+        const curve = state.doc.curves[sk.curveIndex];
+        const key = curve.keys[sk.keyIndex];
+        const newKey = applyTangentModeToKey(
+          key,
+          val as TangentMode,
+          getComponentCount(curve.type),
+          activeComp
+        );
+        return {
+          op: 'replace' as const,
+          path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}`,
+          value: newKey,
+        };
+      });
       this.postEdit(ops);
     });
 

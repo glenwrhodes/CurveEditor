@@ -114,6 +114,14 @@ export class CurveEditorProvider implements vscode.CustomTextEditorProvider {
           case 'command:deleteCurve':
             this.deleteCurve(document, msg.name);
             break;
+          case 'command:viewJson':
+            vscode.commands.executeCommand(
+              'vscode.openWith',
+              document.uri,
+              'default',
+              vscode.ViewColumn.Beside
+            );
+            break;
         }
       },
       undefined,

@@ -41,6 +41,8 @@ export function renderKeys(
         const componentColors = getComponentColors(componentCount);
 
         for (let comp = 0; comp < componentCount; comp++) {
+          if (!state.isComponentVisible(curveIndex, comp)) continue;
+
           const val = values[comp];
           const sx = curveToScreenX(state.viewport, key.time) * dpr;
           const sy = curveToScreenY(state.viewport, val, state.canvasHeight) * dpr;
@@ -188,29 +190,51 @@ function getComponentColors(count: number): string[] {
 
 /**
  * Hit test: check if screen point is near a keyframe diamond.
- * Returns the hit key or null.
+ * Returns the hit key (and component index for vec/color curves) or null.
  */
 export function hitTestKeys(
   state: EditorState,
   screenX: number,
   screenY: number,
   dpr: number
-): { curveIndex: number; keyIndex: number } | null {
+): { curveIndex: number; keyIndex: number; component?: number } | null {
   const hitRadius = (KEY_SIZE + 4) / 2;
   const visibleCurves = state.getVisibleCurves();
 
   for (const { curve, index: curveIndex } of visibleCurves) {
     for (let ki = curve.keys.length - 1; ki >= 0; ki--) {
       const key = state.getKey(curveIndex, ki);
-      const vals = typeof key.value === 'number' ? [key.value] : (key.value as number[]);
 
-      for (const val of vals) {
+      if (typeof key.value === 'number') {
         const sx = curveToScreenX(state.viewport, key.time);
-        const sy = curveToScreenY(state.viewport, val, state.canvasHeight);
-        const dx = screenX - sx;
-        const dy = screenY - sy;
-        if (Math.abs(dx) <= hitRadius && Math.abs(dy) <= hitRadius) {
+        const sy = curveToScreenY(state.viewport, key.value, state.canvasHeight);
+        if (Math.abs(screenX - sx) <= hitRadius && Math.abs(screenY - sy) <= hitRadius) {
           return { curveIndex, keyIndex: ki };
+        }
+      } else {
+        const vals = key.value as number[];
+        let bestDist = Infinity;
+        let bestComp = 0;
+        let anyHit = false;
+
+        for (let ci = 0; ci < vals.length; ci++) {
+          if (!state.isComponentVisible(curveIndex, ci)) continue;
+          const sx = curveToScreenX(state.viewport, key.time);
+          const sy = curveToScreenY(state.viewport, vals[ci], state.canvasHeight);
+          const dx = screenX - sx;
+          const dy = screenY - sy;
+          if (Math.abs(dx) <= hitRadius && Math.abs(dy) <= hitRadius) {
+            const dist = dx * dx + dy * dy;
+            if (dist < bestDist) {
+              bestDist = dist;
+              bestComp = ci;
+              anyHit = true;
+            }
+          }
+        }
+
+        if (anyHit) {
+          return { curveIndex, keyIndex: ki, component: bestComp };
         }
       }
     }
@@ -240,6 +264,7 @@ export function hitTestTangents(
       const components = typeof key.value === 'number' ? [undefined] : (key.value as number[]).map((_, i) => i);
 
       for (const comp of components) {
+        if (comp !== undefined && !state.isComponentVisible(curveIndex, comp)) continue;
         const val = typeof key.value === 'number' ? key.value : (key.value as number[])[comp ?? 0];
         const tangents = getEffectiveTangents(allKeys, ki, comp);
 

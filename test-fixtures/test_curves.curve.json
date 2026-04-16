@@ -125,6 +125,27 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": []
+    },
+    {
+      "name": "perComponentInterp",
+      "type": "vec3",
+      "preInfinity": "constant",
+      "postInfinity": "constant",
+      "keys": [
+        {
+          "time": 0.0,
+          "value": [0.0, 0.0, 0.0],
+          "interp": "linear",
+          "tangentMode": "auto",
+          "componentInterp": ["linear", "linear", "constant"]
+        },
+        {
+          "time": 1.0,
+          "value": [10.0, 10.0, 10.0],
+          "interp": "linear",
+          "tangentMode": "auto"
+        }
+      ]
     }
   ]
 }

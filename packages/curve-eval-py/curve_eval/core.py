@@ -201,12 +201,33 @@ def _get_effective_tangent(
     keys: List[KeyFrame], i: int, which: str, component: Optional[int] = None
 ) -> TangentHandle:
     key = keys[i]
-    if key.get("tangentMode") == "auto" or (
+    mode = _get_effective_tangent_mode(key, component)
+    if mode == "auto" or (
         key.get("tangentIn") is None and key.get("tangentOut") is None
     ):
         tin, tout = _compute_auto_tangents(keys, i, component)
         return tin if which == "in" else tout
     return _get_tangent(key, which, component)
+
+
+def _get_effective_interp(key: KeyFrame, component: Optional[int] = None) -> str:
+    """Resolve effective interpolation mode, honoring per-component overrides."""
+    comp_interp = key.get("componentInterp")
+    if component is not None and comp_interp and component < len(comp_interp):
+        override = comp_interp[component]
+        if override:
+            return str(override)
+    return str(key.get("interp", "linear"))
+
+
+def _get_effective_tangent_mode(key: KeyFrame, component: Optional[int] = None) -> str:
+    """Resolve effective tangent mode, honoring per-component overrides."""
+    comp_mode = key.get("componentTangentMode")
+    if component is not None and comp_mode and component < len(comp_mode):
+        override = comp_mode[component]
+        if override:
+            return str(override)
+    return str(key.get("tangentMode", "auto"))
 
 
 # ── Bezier Math ──
@@ -282,7 +303,8 @@ def _evaluate_scalar(
     k1 = keys[idx + 1]
     v0 = _get_scalar(k0["value"], component)
     v1 = _get_scalar(k1["value"], component)
-    interp = k0.get("interp", "linear")
+    # Use effective interp so vec/color components can have independent modes
+    interp = _get_effective_interp(k0, component)
 
     if interp == "constant":
         return v0
