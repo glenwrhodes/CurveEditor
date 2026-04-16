@@ -4,3 +4,7 @@ node_modules/**
 tsconfig.json
 esbuild.config.mjs
 .vscode/**
+
+# Only ship icon.png; larger source variants are for README or future use
+icon-256.png
+icon-512.png

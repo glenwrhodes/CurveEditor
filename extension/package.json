@@ -3,13 +3,36 @@
   "displayName": "Curve Editor",
   "description": "Visual curve editor for .curve.json files — define animation curves, parameter envelopes, and state timelines with bezier, linear, and constant interpolation.",
   "version": "0.1.0",
-  "publisher": "GlenRhodesConsulting",
+  "publisher": "TinyMooshGamesInc",
+  "license": "MIT",
+  "author": {
+    "name": "Glen Rhodes",
+    "url": "https://tinymoosh.com"
+  },
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glenwrhodes/CurveEditor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/glenwrhodes/CurveEditor/issues"
+  },
+  "homepage": "https://github.com/glenwrhodes/CurveEditor#readme",
   "categories": [
     "Visualization",
     "Other"
+  ],
+  "keywords": [
+    "curve",
+    "animation",
+    "keyframe",
+    "bezier",
+    "tween",
+    "interpolation",
+    "game-dev"
   ],
   "activationEvents": [
     "onCustomEditor:curveEditor.curveView"

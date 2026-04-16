@@ -30,6 +30,15 @@
   ],
   "author": "Glen Rhodes / Tiny Moosh Games Inc.",
   "license": "MIT",
+  "homepage": "https://github.com/glenwrhodes/CurveEditor#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glenwrhodes/CurveEditor.git",
+    "directory": "packages/curve-eval-js"
+  },
+  "bugs": {
+    "url": "https://github.com/glenwrhodes/CurveEditor/issues"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "esbuild": "^0.20.0",

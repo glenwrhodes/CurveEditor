@@ -6,14 +6,22 @@ build-backend = "setuptools.build_meta"
 name = "curve-eval"
 version = "1.0.0"
 description = "Evaluate .curve.json animation curves — supports bezier, linear, constant interpolation."
-authors = [{ name = "Glen Rhodes", email = "glen@tinymoosh.com" }]
+authors = [{ name = "Glen Rhodes", email = "glenwrhodes@gmail.com" }]
 license = { text = "MIT" }
 requires-python = ">=3.9"
+keywords = ["curve", "animation", "bezier", "interpolation", "keyframe", "game-dev"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+
+[project.urls]
+Homepage = "https://github.com/glenwrhodes/CurveEditor"
+Repository = "https://github.com/glenwrhodes/CurveEditor"
+Issues = "https://github.com/glenwrhodes/CurveEditor/issues"
 
 [tool.mypy]
 strict = true
