@@ -2,7 +2,7 @@
   "name": "curve-editor",
   "displayName": "Curve Editor",
   "description": "Visual curve editor for .curve.json files — define animation curves, parameter envelopes, and state timelines with bezier, linear, and constant interpolation.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "TinyMooshGamesInc",
   "license": "MIT",
   "author": {

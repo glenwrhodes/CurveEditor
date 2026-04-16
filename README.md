@@ -131,6 +131,40 @@ cd packages/curve-eval-py && python -m pytest tests/ -v
 | `curveEditor.curveLineWidth` | 2 | Curve line thickness |
 | `curveEditor.antiAlias` | true | Canvas anti-aliasing |
 
+## Publishing a New Version
+
+All three packages ship in lockstep — one shared version number across the extension, npm package, and PyPI package. Use the publish script at the repo root:
+
+```powershell
+# Patch bump (e.g. 0.1.1 -> 0.1.2), full publish to all three registries
+.\publish-all.ps1
+
+# Other bump types
+.\publish-all.ps1 -Bump minor        # 0.1.2 -> 0.2.0
+.\publish-all.ps1 -Bump major        # 0.1.2 -> 1.0.0
+.\publish-all.ps1 -Version 1.2.3     # explicit
+
+# Skip pieces when not needed
+.\publish-all.ps1 -SkipTests
+.\publish-all.ps1 -SkipJs -SkipPy    # extension-only release
+.\publish-all.ps1 -DryRun            # print what would happen
+```
+
+The script:
+
+1. Verifies git is clean
+2. Bumps version in `extension/package.json`, `packages/curve-eval-js/package.json`, and `packages/curve-eval-py/pyproject.toml`
+3. Runs JS + Python test suites
+4. Builds the JS library, extension bundle, and Python distributions
+5. Publishes to npm, PyPI, and the VS Code Marketplace
+6. Commits the version bump, tags `vX.Y.Z`, and pushes to origin
+
+Prerequisites (one-time, already done on your machine):
+
+- `npm login` (or a token in npm config)
+- `~/.pypirc` with a PyPI API token
+- `vsce login TinyMooshGamesInc` with a Marketplace PAT
+
 ## License
 
 MIT — Glen Rhodes / Tiny Moosh Games Inc.
