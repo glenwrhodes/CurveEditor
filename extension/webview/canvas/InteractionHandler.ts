@@ -287,8 +287,24 @@ export class InteractionHandler {
 
     const keyVal = typeof key.value === 'number' ? key.value : (key.value as number[])[comp ?? 0];
 
-    const dx = curveTime - key.time;
+    // Clamp tangent handles so they can't flip past the key.
+    // tangentIn must have dx <= 0 (points backward from key),
+    // tangentOut must have dx >= 0 (points forward from key).
+    // Also clamp to a sane magnitude relative to the neighbor distance so the
+    // control point stays inside the segment (prevents wild bezier self-intersections).
+    const rawDx = curveTime - key.time;
     const dy = curveVal - keyVal;
+    let dx: number;
+
+    if (which === 'in') {
+      const prevKey = sk.keyIndex > 0 ? curve.keys[sk.keyIndex - 1] : null;
+      const maxBack = prevKey ? (key.time - prevKey.time) : Infinity;
+      dx = Math.min(0, Math.max(-maxBack, rawDx));
+    } else {
+      const nextKey = sk.keyIndex < curve.keys.length - 1 ? curve.keys[sk.keyIndex + 1] : null;
+      const maxForward = nextKey ? (nextKey.time - key.time) : Infinity;
+      dx = Math.max(0, Math.min(maxForward, rawDx));
+    }
 
     const newKey: KeyFrame = JSON.parse(JSON.stringify(key));
     newKey.tangentMode = newKey.tangentMode === 'auto' ? 'user' : newKey.tangentMode;
@@ -451,6 +467,7 @@ export class InteractionHandler {
 
     const curveIdx = state.getSelectedCurveIndex();
     if (curveIdx === null) return;
+    if (state.isCurveLocked(curveIdx)) return;
 
     const curve = state.doc.curves[curveIdx];
     if (!curve) return;
@@ -596,6 +613,7 @@ export class InteractionHandler {
           { label: 'Aligned', action: () => this.setSelectedTangentMode('aligned') },
         ]},
         { label: 'Flatten Tangents', action: () => this.flattenSelectedTangents() },
+        { label: 'Reset Tangents to Auto', action: () => this.resetSelectedTangents() },
         { type: 'separator' },
         { label: 'Delete Key', action: () => this.deleteSelectedKeys() },
         { type: 'separator' },
@@ -621,6 +639,7 @@ export class InteractionHandler {
     const { state } = this;
     const curveIdx = state.getSelectedCurveIndex();
     if (curveIdx === null) return;
+    if (state.isCurveLocked(curveIdx)) return;
 
     const curve = state.doc.curves[curveIdx];
     let keyValue: number | number[] = value;
@@ -691,6 +710,28 @@ export class InteractionHandler {
     if (ops.length > 0) this.postEdit(ops);
   }
 
+  /** Reset selected keys' tangents to auto-computed — removes custom handles
+   *  and overrides. Useful for recovering from malformed tangent data. */
+  private resetSelectedTangents(): void {
+    const { state } = this;
+    if (state.selectedKeys.length === 0) return;
+    const ops: JsonPatchOp[] = [];
+    for (const sk of state.selectedKeys) {
+      const key = state.doc.curves[sk.curveIndex].keys[sk.keyIndex];
+      const newKey: KeyFrame = JSON.parse(JSON.stringify(key));
+      newKey.tangentMode = 'auto';
+      delete newKey.tangentIn;
+      delete newKey.tangentOut;
+      delete newKey.componentTangentMode;
+      ops.push({
+        op: 'replace',
+        path: `/curves/${sk.curveIndex}/keys/${sk.keyIndex}`,
+        value: newKey,
+      });
+    }
+    if (ops.length > 0) this.postEdit(ops);
+  }
+
   /** Clipboard for copy/paste keys */
   private static clipboard: KeyFrame[] = [];
 
@@ -706,6 +747,7 @@ export class InteractionHandler {
     if (InteractionHandler.clipboard.length === 0) return;
     const curveIdx = state.getSelectedCurveIndex();
     if (curveIdx === null) return;
+    if (state.isCurveLocked(curveIdx)) return;
 
     const timeOffset = 0.2;
     const ops: JsonPatchOp[] = InteractionHandler.clipboard.map((key) => {

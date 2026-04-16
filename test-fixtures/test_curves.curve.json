@@ -7,7 +7,12 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 1.0, "value": 5.0, "interp": "bezier", "tangentMode": "auto" }
+        {
+          "time": 1,
+          "value": 5,
+          "interp": "bezier",
+          "tangentMode": "auto"
+        }
       ]
     },
     {
@@ -16,8 +21,18 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": 0.0, "interp": "linear", "tangentMode": "auto" },
-        { "time": 1.0, "value": 1.0, "interp": "linear", "tangentMode": "auto" }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1,
+          "value": 1,
+          "interp": "linear",
+          "tangentMode": "auto"
+        }
       ]
     },
     {
@@ -26,8 +41,26 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": 0.0, "interp": "bezier", "tangentMode": "user", "tangentOut": { "dx": 0.333, "dy": 0.0 } },
-        { "time": 1.0, "value": 1.0, "interp": "bezier", "tangentMode": "user", "tangentIn": { "dx": -0.333, "dy": 0.0 } }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentOut": {
+            "dx": 0.333,
+            "dy": 0
+          }
+        },
+        {
+          "time": 1,
+          "value": 1,
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentIn": {
+            "dx": -0.333,
+            "dy": 0
+          }
+        }
       ]
     },
     {
@@ -36,8 +69,26 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": 0.0, "interp": "bezier", "tangentMode": "user", "tangentOut": { "dx": 0.1, "dy": 0.9 } },
-        { "time": 1.0, "value": 1.0, "interp": "bezier", "tangentMode": "user", "tangentIn": { "dx": -0.1, "dy": -0.9 } }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentOut": {
+            "dx": 0.1,
+            "dy": 0.9
+          }
+        },
+        {
+          "time": 1,
+          "value": 1,
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentIn": {
+            "dx": -0.1,
+            "dy": -0.9
+          }
+        }
       ]
     },
     {
@@ -46,10 +97,30 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": 0.0, "interp": "bezier", "tangentMode": "auto" },
-        { "time": 1.0, "value": 1.0, "interp": "linear", "tangentMode": "auto" },
-        { "time": 2.0, "value": 0.5, "interp": "constant", "tangentMode": "auto" },
-        { "time": 3.0, "value": 0.8, "interp": "bezier", "tangentMode": "auto" }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "bezier",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1,
+          "value": 1,
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 2,
+          "value": 0.5,
+          "interp": "constant",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 3,
+          "value": 0.8,
+          "interp": "bezier",
+          "tangentMode": "auto"
+        }
       ]
     },
     {
@@ -58,8 +129,16 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": 0, "interp": "linear" },
-        { "time": 1.0, "value": 10, "interp": "linear" }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "linear"
+        },
+        {
+          "time": 1,
+          "value": 10,
+          "interp": "linear"
+        }
       ]
     },
     {
@@ -67,16 +146,39 @@
       "type": "int",
       "states": {
         "count": 3,
-        "labels": ["Red", "Yellow", "Green"]
+        "labels": [
+          "Red",
+          "Yellow",
+          "Green"
+        ]
       },
-      "range": { "min": 0, "max": 2 },
+      "range": {
+        "min": 0,
+        "max": 2
+      },
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": 0, "interp": "constant" },
-        { "time": 5.0, "value": 2, "interp": "constant" },
-        { "time": 8.0, "value": 1, "interp": "constant" },
-        { "time": 12.0, "value": 0, "interp": "constant" }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "constant"
+        },
+        {
+          "time": 5,
+          "value": 2,
+          "interp": "constant"
+        },
+        {
+          "time": 8,
+          "value": 1,
+          "interp": "constant"
+        },
+        {
+          "time": 12,
+          "value": 0,
+          "interp": "constant"
+        }
       ]
     },
     {
@@ -85,8 +187,26 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": [0.0, 0.0, 0.0], "interp": "linear", "tangentMode": "auto" },
-        { "time": 1.0, "value": [10.0, 5.0, 2.0], "interp": "linear", "tangentMode": "auto" }
+        {
+          "time": 0,
+          "value": [
+            0,
+            0,
+            0
+          ],
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1,
+          "value": [
+            10,
+            5,
+            2
+          ],
+          "interp": "linear",
+          "tangentMode": "auto"
+        }
       ]
     },
     {
@@ -95,8 +215,28 @@
       "preInfinity": "constant",
       "postInfinity": "constant",
       "keys": [
-        { "time": 0.0, "value": [1.0, 0.0, 0.0, 1.0], "interp": "linear", "tangentMode": "auto" },
-        { "time": 1.0, "value": [0.0, 0.0, 1.0, 1.0], "interp": "linear", "tangentMode": "auto" }
+        {
+          "time": 0,
+          "value": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1,
+          "value": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "interp": "linear",
+          "tangentMode": "auto"
+        }
       ]
     },
     {
@@ -105,8 +245,18 @@
       "preInfinity": "cycle",
       "postInfinity": "cycle",
       "keys": [
-        { "time": 0.0, "value": 0.0, "interp": "linear", "tangentMode": "auto" },
-        { "time": 1.0, "value": 1.0, "interp": "linear", "tangentMode": "auto" }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1,
+          "value": 1,
+          "interp": "linear",
+          "tangentMode": "auto"
+        }
       ]
     },
     {
@@ -115,8 +265,18 @@
       "preInfinity": "oscillate",
       "postInfinity": "oscillate",
       "keys": [
-        { "time": 0.0, "value": 0.0, "interp": "linear", "tangentMode": "auto" },
-        { "time": 1.0, "value": 1.0, "interp": "linear", "tangentMode": "auto" }
+        {
+          "time": 0,
+          "value": 0,
+          "interp": "linear",
+          "tangentMode": "auto"
+        },
+        {
+          "time": 1,
+          "value": 1,
+          "interp": "linear",
+          "tangentMode": "auto"
+        }
       ]
     },
     {
@@ -133,17 +293,80 @@
       "postInfinity": "constant",
       "keys": [
         {
-          "time": 0.0,
-          "value": [0.0, 0.0, 0.0],
-          "interp": "linear",
-          "tangentMode": "auto",
-          "componentInterp": ["linear", "linear", "constant"]
+          "time": 0.1,
+          "value": [
+            17,
+            1.3,
+            0.6000000000000001
+          ],
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentIn": [
+            {
+              "dx": -0.3333333333333333,
+              "dy": -3.333333333333333
+            },
+            {
+              "dx": -0.3333333333333333,
+              "dy": -3.333333333333333
+            },
+            {
+              "dx": -0.3333333333333333,
+              "dy": -3.333333333333333
+            }
+          ],
+          "tangentOut": [
+            {
+              "dx": 0.06497332706733117,
+              "dy": -7.822980164168573
+            },
+            {
+              "dx": 0.5318813816022863,
+              "dy": 12.55440136565085
+            },
+            {
+              "dx": 0.6139866805191992,
+              "dy": 4.492264810598034
+            }
+          ]
         },
         {
-          "time": 1.0,
-          "value": [10.0, 10.0, 10.0],
-          "interp": "linear",
-          "tangentMode": "auto"
+          "time": 1,
+          "value": [
+            10,
+            10,
+            10
+          ],
+          "interp": "bezier",
+          "tangentMode": "user",
+          "tangentIn": [
+            {
+              "dx": -0.09883409525871212,
+              "dy": 4.775659429067311
+            },
+            {
+              "dx": -0.42757878709773545,
+              "dy": -0.7344932591712023
+            },
+            {
+              "dx": -0.21995056067308916,
+              "dy": -7.438512363194732
+            }
+          ],
+          "tangentOut": [
+            {
+              "dx": 0.3,
+              "dy": -2.333333333333333
+            },
+            {
+              "dx": 0.3,
+              "dy": 2.9
+            },
+            {
+              "dx": 0.3,
+              "dy": 3.1333333333333333
+            }
+          ]
         }
       ]
     }

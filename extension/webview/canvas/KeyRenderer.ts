@@ -2,6 +2,7 @@ import { EditorState } from '../state/EditorState';
 import { CurveDefinition, KeyFrame, TangentHandle } from '../../src/protocol';
 import { curveToScreenX, curveToScreenY } from '../math/transforms';
 import { getEffectiveTangents } from '../math/tangents';
+import { getEffectiveInterp } from '../math/effective';
 
 const KEY_SIZE = 8;
 const HANDLE_RADIUS = 4;
@@ -17,11 +18,13 @@ export function renderKeys(
   for (const { curve, index: curveIndex } of visibleCurves) {
     const color = state.getCurveColor(curveIndex);
     const keys = curve.keys;
+    const isLocked = state.isCurveLocked(curveIndex);
 
     for (let ki = 0; ki < keys.length; ki++) {
       const key = state.getKey(curveIndex, ki);
-      const isSelected = state.isKeySelected(curveIndex, ki);
+      const isSelected = !isLocked && state.isKeySelected(curveIndex, ki);
       const isHovered =
+        !isLocked &&
         state.hoveredKey?.curveIndex === curveIndex &&
         state.hoveredKey?.keyIndex === ki;
 
@@ -30,11 +33,14 @@ export function renderKeys(
         const sx = curveToScreenX(state.viewport, key.time) * dpr;
         const sy = curveToScreenY(state.viewport, val, state.canvasHeight) * dpr;
 
-        if (isSelected && key.interp === 'bezier' && state.tangentDisplayEnabled) {
-          renderTangentHandles(ctx, state, keys, curveIndex, ki, sx, sy, val, color, dpr);
+        if (isLocked) {
+          drawLockedDot(ctx, sx, sy, color, dpr);
+        } else {
+          if (isSelected && state.tangentDisplayEnabled) {
+            renderTangentHandles(ctx, state, keys, curveIndex, ki, sx, sy, val, color, dpr);
+          }
+          drawDiamond(ctx, sx, sy, KEY_SIZE * dpr, color, isSelected, isHovered, dpr);
         }
-
-        drawDiamond(ctx, sx, sy, KEY_SIZE * dpr, color, isSelected, isHovered, dpr);
       } else {
         const values = key.value as number[];
         const componentCount = values.length;
@@ -47,15 +53,34 @@ export function renderKeys(
           const sx = curveToScreenX(state.viewport, key.time) * dpr;
           const sy = curveToScreenY(state.viewport, val, state.canvasHeight) * dpr;
 
-          if (isSelected && key.interp === 'bezier' && state.tangentDisplayEnabled) {
-            renderTangentHandles(ctx, state, keys, curveIndex, ki, sx, sy, val, componentColors[comp], dpr, comp);
+          if (isLocked) {
+            drawLockedDot(ctx, sx, sy, componentColors[comp], dpr);
+          } else {
+            if (isSelected && state.tangentDisplayEnabled) {
+              renderTangentHandles(ctx, state, keys, curveIndex, ki, sx, sy, val, componentColors[comp], dpr, comp);
+            }
+            drawDiamond(ctx, sx, sy, KEY_SIZE * dpr, componentColors[comp], isSelected, isHovered, dpr);
           }
-
-          drawDiamond(ctx, sx, sy, KEY_SIZE * dpr, componentColors[comp], isSelected, isHovered, dpr);
         }
       }
     }
   }
+}
+
+function drawLockedDot(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  color: string,
+  dpr: number
+): void {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, 2 * dpr, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.5;
+  ctx.fill();
+  ctx.restore();
 }
 
 function renderTangentHandles(
@@ -78,48 +103,57 @@ function renderTangentHandles(
   const styles = getComputedStyle(document.documentElement);
   const handleColor = styles.getPropertyValue('--key-handle').trim() || color;
 
-  // Tangent In
+  // Tangent In: only meaningful if the LEFT segment (prev -> this key) is bezier
+  // for this component. The segment's interp is determined by the previous key.
   if (ki > 0) {
-    const inX = curveToScreenX(state.viewport, key.time + tangents.tangentIn.dx) * dpr;
-    const inY = curveToScreenY(state.viewport, keyValue + tangents.tangentIn.dy, state.canvasHeight) * dpr;
+    const prevKey = allKeys[ki - 1];
+    const prevSegmentInterp = getEffectiveInterp(prevKey, component);
+    if (prevSegmentInterp === 'bezier') {
+      const inX = curveToScreenX(state.viewport, key.time + tangents.tangentIn.dx) * dpr;
+      const inY = curveToScreenY(state.viewport, keyValue + tangents.tangentIn.dy, state.canvasHeight) * dpr;
 
-    ctx.save();
-    ctx.strokeStyle = handleColor;
-    ctx.lineWidth = HANDLE_LINE_WIDTH * dpr;
-    ctx.beginPath();
-    ctx.moveTo(keySx, keySy);
-    ctx.lineTo(inX, inY);
-    ctx.stroke();
+      ctx.save();
+      ctx.strokeStyle = handleColor;
+      ctx.lineWidth = HANDLE_LINE_WIDTH * dpr;
+      ctx.beginPath();
+      ctx.moveTo(keySx, keySy);
+      ctx.lineTo(inX, inY);
+      ctx.stroke();
 
-    const isHoveredIn =
-      state.hoveredTangent?.curveIndex === curveIndex &&
-      state.hoveredTangent?.keyIndex === ki &&
-      state.hoveredTangent?.which === 'in';
+      const isHoveredIn =
+        state.hoveredTangent?.curveIndex === curveIndex &&
+        state.hoveredTangent?.keyIndex === ki &&
+        state.hoveredTangent?.which === 'in';
 
-    drawCircle(ctx, inX, inY, (isHoveredIn ? HANDLE_RADIUS + 2 : HANDLE_RADIUS) * dpr, handleColor);
-    ctx.restore();
+      drawCircle(ctx, inX, inY, (isHoveredIn ? HANDLE_RADIUS + 2 : HANDLE_RADIUS) * dpr, handleColor);
+      ctx.restore();
+    }
   }
 
-  // Tangent Out
+  // Tangent Out: only meaningful if the RIGHT segment (this key -> next) is bezier
+  // for this component. The segment's interp is determined by this key.
   if (ki < keys.length - 1) {
-    const outX = curveToScreenX(state.viewport, key.time + tangents.tangentOut.dx) * dpr;
-    const outY = curveToScreenY(state.viewport, keyValue + tangents.tangentOut.dy, state.canvasHeight) * dpr;
+    const thisSegmentInterp = getEffectiveInterp(key, component);
+    if (thisSegmentInterp === 'bezier') {
+      const outX = curveToScreenX(state.viewport, key.time + tangents.tangentOut.dx) * dpr;
+      const outY = curveToScreenY(state.viewport, keyValue + tangents.tangentOut.dy, state.canvasHeight) * dpr;
 
-    ctx.save();
-    ctx.strokeStyle = handleColor;
-    ctx.lineWidth = HANDLE_LINE_WIDTH * dpr;
-    ctx.beginPath();
-    ctx.moveTo(keySx, keySy);
-    ctx.lineTo(outX, outY);
-    ctx.stroke();
+      ctx.save();
+      ctx.strokeStyle = handleColor;
+      ctx.lineWidth = HANDLE_LINE_WIDTH * dpr;
+      ctx.beginPath();
+      ctx.moveTo(keySx, keySy);
+      ctx.lineTo(outX, outY);
+      ctx.stroke();
 
-    const isHoveredOut =
-      state.hoveredTangent?.curveIndex === curveIndex &&
-      state.hoveredTangent?.keyIndex === ki &&
-      state.hoveredTangent?.which === 'out';
+      const isHoveredOut =
+        state.hoveredTangent?.curveIndex === curveIndex &&
+        state.hoveredTangent?.keyIndex === ki &&
+        state.hoveredTangent?.which === 'out';
 
-    drawCircle(ctx, outX, outY, (isHoveredOut ? HANDLE_RADIUS + 2 : HANDLE_RADIUS) * dpr, handleColor);
-    ctx.restore();
+      drawCircle(ctx, outX, outY, (isHoveredOut ? HANDLE_RADIUS + 2 : HANDLE_RADIUS) * dpr, handleColor);
+      ctx.restore();
+    }
   }
 }
 
@@ -202,6 +236,9 @@ export function hitTestKeys(
   const visibleCurves = state.getVisibleCurves();
 
   for (const { curve, index: curveIndex } of visibleCurves) {
+    // Locked curves are non-interactive — skip hit testing entirely
+    if (state.isCurveLocked(curveIndex)) continue;
+
     for (let ki = curve.keys.length - 1; ki >= 0; ki--) {
       const key = state.getKey(curveIndex, ki);
 
@@ -255,10 +292,12 @@ export function hitTestTangents(
   const visibleCurves = state.getVisibleCurves();
 
   for (const { curve, index: curveIndex } of visibleCurves) {
+    // Locked curves are non-interactive
+    if (state.isCurveLocked(curveIndex)) continue;
+
     for (let ki = 0; ki < curve.keys.length; ki++) {
       if (!state.isKeySelected(curveIndex, ki)) continue;
       const key = state.getKey(curveIndex, ki);
-      if (key.interp !== 'bezier') continue;
 
       const allKeys = curve.keys.map((_, idx) => state.getKey(curveIndex, idx));
       const components = typeof key.value === 'number' ? [undefined] : (key.value as number[]).map((_, i) => i);
@@ -268,8 +307,14 @@ export function hitTestTangents(
         const val = typeof key.value === 'number' ? key.value : (key.value as number[])[comp ?? 0];
         const tangents = getEffectiveTangents(allKeys, ki, comp);
 
-        // Check tangent in
-        if (ki > 0) {
+        // Only hit-test tangentIn if the previous segment uses bezier for this component
+        const prevSegmentIsBezier =
+          ki > 0 && getEffectiveInterp(allKeys[ki - 1], comp) === 'bezier';
+        // Only hit-test tangentOut if the outgoing segment uses bezier for this component
+        const thisSegmentIsBezier =
+          ki < curve.keys.length - 1 && getEffectiveInterp(key, comp) === 'bezier';
+
+        if (prevSegmentIsBezier) {
           const inSx = curveToScreenX(state.viewport, key.time + tangents.tangentIn.dx);
           const inSy = curveToScreenY(state.viewport, val + tangents.tangentIn.dy, state.canvasHeight);
           if (Math.abs(screenX - inSx) <= hitRadius && Math.abs(screenY - inSy) <= hitRadius) {
@@ -277,8 +322,7 @@ export function hitTestTangents(
           }
         }
 
-        // Check tangent out
-        if (ki < curve.keys.length - 1) {
+        if (thisSegmentIsBezier) {
           const outSx = curveToScreenX(state.viewport, key.time + tangents.tangentOut.dx);
           const outSy = curveToScreenY(state.viewport, val + tangents.tangentOut.dy, state.canvasHeight);
           if (Math.abs(screenX - outSx) <= hitRadius && Math.abs(screenY - outSy) <= hitRadius) {
