@@ -43,6 +43,13 @@ export class CurveList {
     header.appendChild(toggleAllBtn);
     this.toggleAllBtn = toggleAllBtn;
 
+    const toggleAllLockBtn = document.createElement('button');
+    toggleAllLockBtn.className = 'curve-list-toggle-all';
+    toggleAllLockBtn.setAttribute('aria-label', 'Toggle lock of all curves');
+    toggleAllLockBtn.addEventListener('click', () => this.toggleAllLock());
+    header.appendChild(toggleAllLockBtn);
+    this.toggleAllLockBtn = toggleAllLockBtn;
+
     this.container.appendChild(header);
 
     this.listEl = document.createElement('div');
@@ -56,6 +63,7 @@ export class CurveList {
   }
 
   private toggleAllBtn!: HTMLButtonElement;
+  private toggleAllLockBtn!: HTMLButtonElement;
 
   /** Tracks the last click on a curve row for manual double-click detection.
    *  We need this because markDirty() re-renders the list between clicks,
@@ -74,6 +82,16 @@ export class CurveList {
     state.markDirty();
   }
 
+  private toggleAllLock(): void {
+    const { state } = this;
+    const anyLocked = state.doc.curves.some((_, i) => state.isCurveLocked(i));
+    const newValue = !anyLocked;
+    for (let i = 0; i < state.doc.curves.length; i++) {
+      state.curveLocked.set(i, newValue);
+    }
+    state.markDirty();
+  }
+
   private render(): void {
     const { state, listEl } = this;
     listEl.innerHTML = '';
@@ -85,6 +103,15 @@ export class CurveList {
     this.toggleAllBtn.setAttribute(
       'aria-label',
       anyVisible ? 'Hide all curves' : 'Show all curves'
+    );
+
+    // Update the global lock toggle button
+    const anyLocked = state.doc.curves.some((_, i) => state.isCurveLocked(i));
+    this.toggleAllLockBtn.innerHTML = anyLocked ? '&#x1F512;' : '&#x1F513;';
+    this.toggleAllLockBtn.classList.toggle('active', anyLocked);
+    this.toggleAllLockBtn.setAttribute(
+      'aria-label',
+      anyLocked ? 'Unlock all curves' : 'Lock all curves'
     );
 
     for (let i = 0; i < state.doc.curves.length; i++) {
