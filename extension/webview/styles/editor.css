@@ -302,7 +302,19 @@ select option:hover,
   border-top: 1px solid var(--panel-border);
   padding: 6px 12px;
   flex-shrink: 0;
-  min-height: 52px;
+  /* Fixed height so the canvas doesn't jump as keys are selected/deselected.
+     Sized to fit the tallest layout (single key with tangent handle fields). */
+  min-height: 96px;
+  height: 96px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.inspector-empty-hint {
+  font-size: 10px;
+  opacity: 0.35;
+  margin-top: 6px;
+  text-align: left;
 }
 
 .inspector-title {

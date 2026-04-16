@@ -42,23 +42,23 @@ export class KeyInspector {
     const { state } = this;
     const keys = state.selectedKeys;
 
-    // Preserve focus: if user is editing a field in the inspector, don't rebuild
-    // the DOM (which would blur the field and close any open color picker).
-    const active = document.activeElement;
-    if (active && this.contentEl.contains(active)) {
+    // Only preserve focus for the native color picker — rebuilding would close it.
+    // Other inputs (text fields, selects) are fine to rebuild because clicking a
+    // different keyframe means the user wants to see that new key's values.
+    const active = document.activeElement as HTMLElement | null;
+    if (
+      active &&
+      this.contentEl.contains(active) &&
+      active instanceof HTMLInputElement &&
+      active.type === 'color'
+    ) {
       return;
     }
 
     this.contentEl.innerHTML = '';
 
     if (keys.length === 0) {
-      const msg = document.createElement('div');
-      msg.className = 'inspector-empty';
-      msg.textContent = 'No key selected';
-      msg.style.opacity = '0.4';
-      msg.style.fontSize = '11px';
-      msg.style.padding = '4px 0';
-      this.contentEl.appendChild(msg);
+      this.renderEmpty();
       return;
     }
 
@@ -67,6 +67,68 @@ export class KeyInspector {
     } else {
       this.renderMultiKey(keys);
     }
+  }
+
+  /** Render placeholder fields so the panel's height stays the same
+   *  regardless of whether a key is selected. */
+  private renderEmpty(): void {
+    const grid = document.createElement('div');
+    grid.className = 'inspector-grid inspector-empty';
+
+    const addDisabledField = (label: string) => {
+      const group = document.createElement('div');
+      group.className = 'inspector-field';
+
+      const lbl = document.createElement('label');
+      lbl.className = 'inspector-label';
+      lbl.textContent = label;
+      group.appendChild(lbl);
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'inspector-input';
+      input.disabled = true;
+      input.placeholder = '—';
+      group.appendChild(input);
+      grid.appendChild(group);
+    };
+
+    addDisabledField('Time');
+    addDisabledField('Value');
+
+    const addDisabledSelect = (label: string) => {
+      const group = document.createElement('div');
+      group.className = 'inspector-field';
+
+      const lbl = document.createElement('label');
+      lbl.className = 'inspector-label';
+      lbl.textContent = label;
+      group.appendChild(lbl);
+
+      const sel = document.createElement('select');
+      sel.className = 'inspector-select';
+      sel.disabled = true;
+      group.appendChild(sel);
+      grid.appendChild(group);
+    };
+
+    addDisabledSelect('Interp');
+    addDisabledSelect('Tangent');
+
+    this.contentEl.appendChild(grid);
+
+    // Pad out the height to match the typical selected-key layout
+    // (which includes the tangent handles row below the main grid).
+    const pad = document.createElement('div');
+    pad.className = 'inspector-tangent-section inspector-empty-pad';
+    pad.style.visibility = 'hidden';
+    pad.textContent = 'placeholder';
+    this.contentEl.appendChild(pad);
+
+    const hint = document.createElement('div');
+    hint.className = 'inspector-empty-hint';
+    hint.textContent = 'Select a keyframe to edit';
+    this.contentEl.appendChild(hint);
   }
 
   private renderSingleKey(sk: { curveIndex: number; keyIndex: number }): void {

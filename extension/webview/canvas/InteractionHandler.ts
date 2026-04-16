@@ -112,6 +112,12 @@ export class InteractionHandler {
       }
       state.selectedCurves.add(keyHit.curveIndex);
 
+      // Clicking a specific component diamond makes that component active,
+      // updating the Key Inspector's "Editing:" scope and the sidebar highlight.
+      if (keyHit.component !== undefined) {
+        state.activeComponent = keyHit.component;
+      }
+
       // Snapshot for drag
       const originals = state.selectedKeys.map((sk) =>
         JSON.parse(JSON.stringify(state.doc.curves[sk.curveIndex].keys[sk.keyIndex]))
