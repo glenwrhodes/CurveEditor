@@ -1,7 +1,7 @@
 {
   "name": "curve-editor",
   "displayName": "Curve Editor",
-  "description": "Visual curve editor for .curve.json files — define animation curves, parameter envelopes, and state timelines with bezier, linear, and constant interpolation.",
+  "description": "Visual curve editor for animation curves, easing curves, and parameter timelines. Author bezier, linear, and constant keyframes in .curve.json files. Includes JS and Python runtime libraries for evaluating curves at runtime.",
   "version": "0.1.2",
   "publisher": "TinyMooshGamesInc",
   "license": "MIT",
@@ -27,13 +27,31 @@
   ],
   "keywords": [
     "curve",
+    "curves",
+    "curve editor",
     "animation",
+    "animation curve",
     "keyframe",
+    "keyframes",
     "bezier",
     "tween",
+    "tweening",
+    "easing",
+    "easing curve",
     "interpolation",
-    "game-dev"
+    "timeline",
+    "envelope",
+    "motion",
+    "vfx",
+    "animator",
+    "state machine",
+    "game dev",
+    "gamedev",
+    "godot",
+    "unity",
+    "unreal"
   ],
+  "qna": "marketplace",
   "activationEvents": [
     "onCustomEditor:curveEditor.curveView"
   ],
