@@ -2,7 +2,7 @@
   "name": "curve-editor",
   "displayName": "Curve Editor",
   "description": "Visual curve editor for animation curves, easing curves, and parameter timelines. Author bezier, linear, and constant keyframes in .curve.json files. Includes JS and Python runtime libraries for evaluating curves at runtime.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "TinyMooshGamesInc",
   "license": "MIT",
   "author": {

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "curve-eval"
-version = "0.1.2"
+version = "0.1.3"
 description = "Evaluate .curve.json animation curves — supports bezier, linear, constant interpolation."
 readme = "README.md"
 authors = [{ name = "Glen Rhodes", email = "glenwrhodes@gmail.com" }]
